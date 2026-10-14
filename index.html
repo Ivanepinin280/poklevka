@@ -117,6 +117,13 @@ h3{font-size:16px;margin:0 0 4px;font-weight:600}
 .fishgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
 .fcard{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:10px 14px 12px;cursor:pointer;text-align:left;width:100%}
 .fcard svg{width:100%;height:auto;display:block;margin:-4px 0 2px}
+.fimg{position:relative;margin:0 -14px 8px;border-radius:13px 13px 0 0;overflow:hidden;margin-top:-10px}
+.fimg.photo{aspect-ratio:16/10;background:var(--sea-soft)}
+.fimg.photo img{width:100%;height:100%;object-fit:cover;display:block}
+.fimg.big{margin:-12px -16px 10px;border-radius:13px 13px 0 0}
+.fimg.big.photo{aspect-ratio:auto;max-height:340px}
+.fimg.big.photo img{height:auto;max-height:340px;object-fit:contain;background:var(--sea-soft)}
+.fimg .credit{position:absolute;right:8px;bottom:6px;font-size:11px;background:rgba(0,0,0,.55);color:#fff;padding:2px 6px;border-radius:4px;text-decoration:none}
 .fcard b{display:block;font-weight:600}
 .fcard span{font-size:13px;color:var(--muted)}
 .fdetail{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:12px 16px 16px;margin-bottom:14px}
@@ -795,16 +802,31 @@ function initMap(){
   flyToRegion(true);
 }
 function tryTiles(){
-  const img = new Image(); let done = false;
-  const t = setTimeout(() => { done = true; }, 4000);
-  img.onload = () => {
-    if(done) return; clearTimeout(t); tilesOn = true;
-    vectorLayers.forEach(l => map.removeLayer(l)); map.setMaxZoom(18);
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:19, attribution:'© OpenStreetMap'}).addTo(map).bringToBack();
-    $('mapNote').textContent = 'Номер на метке — место в рейтинге своего города на выбранный день.';
+  // Inside claude.ai external tiles are blocked by the sandbox — keep the vector coast there.
+  const providers = [
+    {url:'https://tile.openstreetmap.org/{z}/{x}/{y}.png', opt:{maxZoom:19, attribution:'© OpenStreetMap'}},
+    {url:'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', opt:{maxZoom:19, subdomains:'abcd', attribution:'© OpenStreetMap © CARTO'}}
+  ];
+  const attempt = i => {
+    if(i >= providers.length) return;
+    const p = providers[i];
+    const layer = L.tileLayer(p.url, {...p.opt, crossOrigin:true});
+    let loaded = 0, failed = 0, switched = false;
+    layer.on('tileload', () => {
+      loaded++;
+      if(switched) return;
+      switched = true; tilesOn = true;
+      vectorLayers.forEach(l => map.removeLayer(l));
+      map.setMaxZoom(18);
+      $('mapNote').textContent = 'Номер на метке — место в рейтинге своего города на выбранный день.';
+    });
+    layer.on('tileerror', () => {
+      failed++;
+      if(!loaded && failed >= 3){ map.removeLayer(layer); attempt(i + 1); }
+    });
+    layer.addTo(map).bringToBack();
   };
-  img.onerror = () => { clearTimeout(t); };
-  img.src = 'https://tile.openstreetmap.org/7/103/58.png';
+  attempt(0);
 }
 function flyToRegion(instant){
   const pts = SPOTS.filter(s => s.r === region).map(s => [s.lat, s.lng]);
@@ -854,25 +876,58 @@ function renderDetail(){
   $('spotDetail').querySelectorAll('.tag').forEach(t => t.onclick = () => { fishSel = t.dataset.f; fishMode = FISH[fishSel].fresh ? 'fresh' : 'sea'; go('fish'); });
 }
 
+/* ---- fish photos (Wikipedia) ---- */
+const PHOTOS = {};
+function loadPhoto(id){
+  if(PHOTOS[id]) return PHOTOS[id];
+  const title = FISH[id].lat.replace(/ /g, '_');
+  const get = lang => fetch(`https://${lang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`)
+    .then(r => r.ok ? r.json() : Promise.reject(r.status))
+    .then(j => { if(!j.thumbnail) throw 0; return {src:j.thumbnail.source, big:j.thumbnail.source.replace(/\/\d+px-/, '/640px-'), page:j.content_urls.desktop.page}; });
+  return PHOTOS[id] = get('en').catch(() => get('ru')).catch(() => null);
+}
+function fishPic(id, big){
+  const f = FISH[id];
+  return `<div class="fimg${big ? ' big' : ''}" data-photo="${id}">${fishSVG(id, f.art, big)}</div>`;
+}
+function hydratePhotos(root){
+  root.querySelectorAll('[data-photo]').forEach(el => {
+    const id = el.dataset.photo, big = el.classList.contains('big');
+    loadPhoto(id).then(p => {
+      if(!p) return;
+      const img = new Image();
+      img.alt = FISH[id].name; img.decoding = 'async';
+      img.onload = () => {
+        el.innerHTML = '';
+        el.appendChild(img);
+        el.classList.add('photo');
+        if(big){ const c = document.createElement('a'); c.href = p.page; c.target = '_blank'; c.rel = 'noopener'; c.className = 'credit'; c.textContent = 'Фото: Википедия'; el.appendChild(c); }
+      };
+      img.src = big ? p.big : p.src;
+    });
+  });
+}
+
 /* ---- fish ---- */
 function renderFish(){
   $('fishFilter').innerHTML = [['sea','Море'],['fresh','Озёра Далата']].map(([k,l]) => `<button class="reg" aria-pressed="${fishMode === k}" data-m="${k}">${l}</button>`).join('');
   $('fishFilter').querySelectorAll('.reg').forEach(b => b.onclick = () => { fishMode = b.dataset.m; fishSel = null; renderFish(); });
   const ids = Object.keys(FISH).filter(k => !!FISH[k].fresh === (fishMode === 'fresh'));
-  $('fishGrid').innerHTML = ids.map(k => `<button class="fcard" data-f="${k}">${fishSVG(k, FISH[k].art)}<b>${esc(FISH[k].name)}</b><span>${esc(FISH[k].vn)}</span></button>`).join('');
+  $('fishGrid').innerHTML = ids.map(k => `<button class="fcard" data-f="${k}">${fishPic(k)}<b>${esc(FISH[k].name)}</b><span>${esc(FISH[k].vn)}</span></button>`).join('');
   $('fishGrid').querySelectorAll('.fcard').forEach(c => c.onclick = () => { fishSel = c.dataset.f; renderFish(); $('fishDetail').scrollIntoView({behavior:'smooth', block:'start'}); });
   if(fishSel){
     const f = FISH[fishSel];
     const where = SPOTS.filter(s => s.fish.includes(fishSel)).map(s => s.name + ' (' + regionOf(s.r).name + ')');
     const photo = 'https://www.google.com/search?tbm=isch&q=' + encodeURIComponent(f.lat + ' ' + f.vn);
-    $('fishDetail').innerHTML = `<div class="fdetail">${fishSVG(fishSel, f.art, true)}
+    $('fishDetail').innerHTML = `<div class="fdetail">${fishPic(fishSel, true)}
       <h3 style="font-size:19px">${esc(f.name)}</h3><div class="lat">${esc(f.lat)}, ${esc(f.vn)}</div>
       <dl><dt>Где</dt><dd>${esc(f.where)}</dd><dt>Когда</dt><dd>${esc(f.when)}</dd><dt>Наживка</dt><dd>${esc(f.bait)}</dd><dt>Приманка</dt><dd>${esc(f.lure)}</dd><dt>Совет</dt><dd>${esc(f.tip)}</dd>
       ${where.length ? `<dt>Места</dt><dd>${esc(where.join(', '))}</dd>` : ''}</dl>
-      <a class="btn ghost" href="${photo}" target="_blank" rel="noopener">Настоящие фото</a>
+      <a class="btn ghost" href="${photo}" target="_blank" rel="noopener">Больше фото</a>
       <button class="btn ghost" id="fishClose" style="margin-left:6px">Свернуть</button></div>`;
     $('fishClose').onclick = () => { fishSel = null; renderFish(); };
   } else $('fishDetail').innerHTML = '';
+  hydratePhotos($('tab-fish'));
   $('baitTbl').innerHTML = '<tr><th>Наживка</th><th>На кого</th><th>Заметка</th></tr>' + BAITS.map(r => `<tr>${r.map(c => `<td>${esc(c)}</td>`).join('')}</tr>`).join('');
   $('lureTbl').innerHTML = '<tr><th>Приманка</th><th>На кого</th><th>Как</th></tr>' + LURES.map(r => `<tr>${r.map(c => `<td>${esc(c)}</td>`).join('')}</tr>`).join('');
 }
