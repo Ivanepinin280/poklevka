@@ -13,6 +13,7 @@
   --bg:#E7EDEF;--paper:#F5F8F8;--ink:#13324A;--muted:#577084;--line:#C7D4DA;
   --sea:#3E7CA6;--sea-soft:#CFE1EC;--land:#EAE3CF;--land-line:#C3B48C;--road:#D9A55B;
   --buoy:#E2532F;--kelp:#4E7A55;--warn:#B5482A;
+  --sky-day:#FCEFC9;--sky-tw:#F3B98E;--sky-night:#24476A;--bite-lo:#A9C6D8;--moon:#F1E7BC;--sun:#F2A93B;
   --display:"Unbounded","Arial Black",system-ui,sans-serif;
   --body:"Golos Text",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   box-sizing:border-box;
@@ -24,13 +25,13 @@
   :root:not([data-theme="light"]){
     --bg:#0D1F2D;--paper:#132A3B;--ink:#E3ECF1;--muted:#93A9B8;--line:#24435C;
     --sea:#6FA8CF;--sea-soft:#14324A;--land:#2A372E;--land-line:#46604C;--road:#9C7A45;
-    --buoy:#FF7A52;--kelp:#82B78A;--warn:#FF8A66;
+    --buoy:#FF7A52;--kelp:#82B78A;--warn:#FF8A66;--sky-day:#3A4A55;--sky-tw:#7A5240;--sky-night:#081621;--bite-lo:#2C5878;--moon:#E9DFB0;--sun:#F2A93B;
   }
 }
 :root[data-theme="dark"]{
   --bg:#0D1F2D;--paper:#132A3B;--ink:#E3ECF1;--muted:#93A9B8;--line:#24435C;
   --sea:#6FA8CF;--sea-soft:#14324A;--land:#2A372E;--land-line:#46604C;--road:#9C7A45;
-  --buoy:#FF7A52;--kelp:#82B78A;--warn:#FF8A66;
+  --buoy:#FF7A52;--kelp:#82B78A;--warn:#FF8A66;--sky-day:#3A4A55;--sky-tw:#7A5240;--sky-night:#081621;--bite-lo:#2C5878;--moon:#E9DFB0;--sun:#F2A93B;
 }
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 *,*::before,*::after{box-sizing:inherit}
@@ -64,13 +65,23 @@ header.top{display:flex;align-items:baseline;justify-content:space-between;gap:1
 .day .best{display:block;font-size:11px;color:var(--buoy);font-weight:600}
 .day[aria-pressed="true"] .best{color:inherit}
 
-.hero{display:grid;justify-items:center;padding:6px 0 4px}
-.dial{width:100%;max-width:340px;height:auto;display:block}
-.dial text{font-family:var(--body);fill:var(--muted);font-size:11px}
-.dial .big{font-family:var(--display);font-weight:700;font-size:52px;fill:var(--ink)}
+.hero{display:grid;grid-template-columns:minmax(0,1fr);justify-items:center;padding:6px 0 4px;text-align:center}
+.dial{width:100%;max-width:400px;height:auto;display:block}
+.dial text{font-family:var(--body);fill:var(--muted);font-size:12px}
+.dial .hr{font-size:13px;fill:var(--ink);font-weight:600}
+.dial .hr.minor{font-size:11px;fill:var(--muted);font-weight:400}
+.dial .big{font-family:var(--display);font-weight:700;font-size:46px;fill:var(--ink)}
+.dial .of{font-size:12px;fill:var(--muted)}
 .dial .verdict{font-size:14px;fill:var(--ink);font-weight:600}
-.legend{display:flex;flex-wrap:wrap;gap:6px 14px;justify-content:center;font-size:13px;color:var(--muted);margin:2px 0 6px}
-.legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px;background:var(--c)}
+.dial .best{font-size:12px;fill:var(--buoy);font-weight:600}
+.dial .tag{font-size:11px;fill:var(--ink);font-weight:600}
+.dial .now{font-size:11px;fill:var(--paper);font-weight:600}
+.legend{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));text-align:left;gap:8px 18px;font-size:13px;color:var(--muted);margin:4px 0 6px;width:100%;max-width:520px}
+.legend > div{display:flex;align-items:center;gap:8px}
+.legend .grad{width:54px;height:10px;border-radius:5px;background:linear-gradient(90deg,var(--bite-lo),var(--buoy));flex:0 0 auto}
+.legend .sw{display:inline-flex;gap:2px;flex:0 0 auto}
+.legend .sw i{width:12px;height:10px;border-radius:2px;display:block}
+.legend svg{width:16px;height:16px;flex:0 0 auto}
 
 h2{font-family:var(--display);font-weight:500;font-size:17px;margin:26px 0 10px;letter-spacing:-.005em}
 h3{font-size:16px;margin:0 0 4px;font-weight:600}
@@ -178,11 +189,14 @@ section[hidden]{display:none}
 
   <section id="tab-day">
     <div class="hero">
-      <svg class="dial" id="dial" viewBox="0 0 320 320" role="img" aria-label="Клёв по часам"></svg>
+      <div class="small muted" id="dialTitle" style="margin-bottom:-4px"></div>
+      <svg class="dial" id="dial" viewBox="0 0 400 400" role="img" aria-label="Клёв по часам"></svg>
+      <div id="dialBest" style="font-weight:600;color:var(--buoy);margin:-6px 0 10px"></div>
       <div class="legend">
-        <span style="--c:var(--buoy)">сила клёва</span>
-        <span style="--c:var(--ink)">ночь</span>
-        <span style="--c:var(--kelp)">луна в зените/надире</span>
+        <div><span class="grad"></span>сила клёва: слабее → сильнее</div>
+        <div><span class="sw"><i style="background:var(--sky-day)"></i><i style="background:var(--sky-tw)"></i><i style="background:var(--sky-night)"></i></span>день, сумерки, ночь</div>
+        <div><svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" fill="var(--moon)" stroke="var(--muted)"/></svg>луна в зените или надире — пик</div>
+        <div><svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="4" fill="var(--sun)"/><g stroke="var(--sun)" stroke-width="1.5"><path d="M8 0v2.5M8 13.5V16M0 8h2.5M13.5 8H16"/></g></svg>восход и закат</div>
       </div>
     </div>
     <h2>Лучшее время</h2>
@@ -726,27 +740,79 @@ function renderDays(){
     </button>`).join('');
   $('days').querySelectorAll('.day').forEach(b => b.onclick = () => { sel = +b.dataset.i; selSpot = null; renderAll(); });
 }
-function polar(r, deg){ const a = (deg - 90)*rad; return [160 + r*Math.cos(a), 160 + r*Math.sin(a)]; }
+const DC = 200; // dial center (viewBox 400)
+function polar(r, deg){ const a = (deg - 90)*rad; return [DC + r*Math.cos(a), DC + r*Math.sin(a)]; }
 function seg(a0, a1, r0, r1){
   const L = a1 - a0 > 180 ? 1 : 0, o0 = polar(r1,a0), o1 = polar(r1,a1), i1 = polar(r0,a1), i0 = polar(r0,a0), f = v => v.toFixed(2);
   return `M${f(o0[0])} ${f(o0[1])}A${r1} ${r1} 0 ${L} 1 ${f(o1[0])} ${f(o1[1])}L${f(i1[0])} ${f(i1[1])}A${r0} ${r0} 0 ${L} 0 ${f(i0[0])} ${f(i0[1])}Z`;
 }
-const tAng = (t, start) => (t - start)/dayMs*360;
+function arc(a0, a1, r){ const L = a1 - a0 > 180 ? 1 : 0, p0 = polar(r,a0), p1 = polar(r,a1); return `M${p0[0].toFixed(2)} ${p0[1].toFixed(2)}A${r} ${r} 0 ${L} 1 ${p1[0].toFixed(2)} ${p1[1].toFixed(2)}`; }
+// noon at the top, midnight at the bottom, time runs clockwise
+const tAng = (t, start) => ((t - start)/dayMs*360 + 180) % 360;
+const hAng = h => (h*15 + 180) % 360;
+function hex2rgb(h){ h = h.trim().replace('#',''); if(h.length === 3) h = h.split('').map(c => c + c).join(''); return [0,2,4].map(i => parseInt(h.slice(i,i+2),16)); }
+function mix(a, b, k){ const A = hex2rgb(a), B = hex2rgb(b); return '#' + A.map((v,i) => Math.round(v + (B[i] - v)*k).toString(16).padStart(2,'0')).join(''); }
 function renderDial(d){
+  const cs = getComputedStyle(document.documentElement), cv = n => cs.getPropertyValue(n).trim();
+  const lo = cv('--bite-lo') || '#A9C6D8', hi = cv('--buoy') || '#E2532F';
+  const R_SKY0 = 66, R_SKY1 = 100, R_BITE0 = 106, R_BITE1 = 146;
+  const slot = 3.75;
   let g = '';
-  for(let k = 0; k < 96; k++) g += `<path d="${seg(k*3.75, (k+1)*3.75 + .05, 98, 106)}" fill="${d.sun[k] < -0.833 ? 'var(--ink)' : 'var(--land)'}" ${d.sun[k] < -0.833 ? 'opacity=".85"' : ''}/>`;
-  d.curve.forEach((v,k) => g += `<path d="${seg(k*3.75 + .3, (k+1)*3.75 - .3, 110, 116 + v*30)}" fill="var(--buoy)" opacity="${(.25 + v*.75).toFixed(2)}"/>`);
-  for(let h = 0; h < 24; h++){ const [x1,y1] = polar(92, h*15), [x2,y2] = polar(h % 6 ? 95 : 88, h*15); g += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="var(--muted)" stroke-width="${h % 6 ? 1 : 1.5}"/>`; }
-  [0,6,12,18].forEach(h => { const [x,y] = polar(78, h*15); g += `<text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="central">${String(h).padStart(2,'0')}</text>`; });
-  [d.sol.transit, d.sol.underfoot].forEach(t => { if(!t) return; const [x,y] = polar(102, tAng(t, d.start)); g += `<circle cx="${x}" cy="${y}" r="5" fill="var(--kelp)" stroke="var(--paper)" stroke-width="2"/>`; });
-  [[d.sol.sunrise,'восход'],[d.sol.sunset,'закат']].forEach(([t,l]) => { if(!t) return; const a = tAng(t, d.start), [x,y] = polar(155, a); g += `<text x="${x}" y="${y}" text-anchor="${a < 180 ? 'start' : 'end'}" dominant-baseline="central">${l} ${fmt(t)}</text>`; });
-  if(d.i === 0){ const a = tAng(Date.now(), d.start), [x1,y1] = polar(62, a), [x2,y2] = polar(148, a); g += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="var(--ink)" stroke-width="2" stroke-linecap="round"/>`; }
-  g += `<text x="160" y="124" text-anchor="middle" style="font-size:13px">${esc(d.R.name)}</text>`;
-  g += `<text x="160" y="140" text-anchor="middle" style="font-size:12px">${dayTitle(d)}, ${d.p.d} ${MONTHS_GEN[d.p.m]}</text>`;
-  g += `<text class="big" x="160" y="180" text-anchor="middle">${num(d.score)}</text>`;
-  g += `<text class="verdict" x="160" y="206" text-anchor="middle">${verdict(d.score)}</text>`;
+  // sky ring
+  for(let k = 0; k < 96; k++){
+    const alt = d.sun[k], a0 = (k*slot + 180) % 360;
+    const col = alt > 6 ? 'var(--sky-day)' : alt > -6 ? 'var(--sky-tw)' : 'var(--sky-night)';
+    g += `<path d="${seg(a0, a0 + slot + .08, R_SKY0, R_SKY1)}" fill="${col}"/>`;
+  }
+  // bite track + bars
+  g += `<circle cx="${DC}" cy="${DC}" r="${(R_BITE0 + R_BITE1)/2}" fill="none" stroke="var(--line)" stroke-width="${R_BITE1 - R_BITE0}" opacity=".35"/>`;
+  d.curve.forEach((v,k) => {
+    const a0 = (k*slot + 180) % 360;
+    g += `<path d="${seg(a0 + .35, a0 + slot - .35, R_BITE0, R_BITE0 + 6 + v*(R_BITE1 - R_BITE0 - 6))}" fill="${mix(lo, hi, clamp((v - .1)/.8, 0, 1))}"/>`;
+  });
+  // best windows: outline arcs
+  d.windows.forEach(w => {
+    const a0 = tAng(w.from, d.start), a1 = a0 + (w.to - w.from)/dayMs*360;
+    g += `<path d="${arc(a0, a1, R_BITE1 + 5)}" stroke="var(--buoy)" stroke-width="3.5" fill="none" stroke-linecap="round"/>`;
+  });
+  // hour ticks + labels
+  for(let h = 0; h < 24; h++){
+    const a = hAng(h), major = h % 3 === 0;
+    const [x1,y1] = polar(R_SKY0 - 1, a), [x2,y2] = polar(R_SKY0 - (major ? 7 : 4), a);
+    g += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="var(--muted)" stroke-width="${major ? 1.5 : 1}"/>`;
+    if(major){
+      const [x,y] = polar(R_BITE1 + 22, a);
+      g += `<text class="hr${h % 6 ? ' minor' : ''}" x="${x}" y="${y}" text-anchor="middle" dominant-baseline="central">${h === 0 ? '00' : h}</text>`;
+    }
+  }
+  // sun events
+  [d.sol.sunrise, d.sol.sunset].forEach(t => {
+    if(!t) return;
+    const a = tAng(t, d.start), [x,y] = polar((R_SKY0 + R_SKY1)/2, a);
+    g += `<g><circle cx="${x}" cy="${y}" r="6" fill="var(--sun)"/>${[0,45,90,135,180,225,270,315].map(r => { const c = Math.cos(r*rad), s = Math.sin(r*rad); return `<line x1="${x + c*8}" y1="${y + s*8}" x2="${x + c*11}" y2="${y + s*11}" stroke="var(--sun)" stroke-width="1.6" stroke-linecap="round"/>`; }).join('')}</g>`;
+  });
+  // moon majors
+  [d.sol.transit, d.sol.underfoot].forEach(t => {
+    if(!t) return;
+    const [x,y] = polar((R_SKY0 + R_SKY1)/2, tAng(t, d.start));
+    g += `<circle cx="${x}" cy="${y}" r="7" fill="var(--moon)" stroke="var(--muted)" stroke-width="1"/>`;
+  });
+  // now hand
+  if(d.i === 0){
+    const a = tAng(Date.now(), d.start), [x1,y1] = polar(R_SKY0 - 2, a), [x2,y2] = polar(R_BITE1 + 8, a), [tx,ty] = polar(R_BITE1 + 8, a);
+    g += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="var(--ink)" stroke-width="2.5" stroke-linecap="round"/>`;
+    g += `<g><rect x="${tx - 26}" y="${ty - 10}" width="52" height="20" rx="10" fill="var(--ink)"/><text class="now" x="${tx}" y="${ty}" text-anchor="middle" dominant-baseline="central">${fmt(Date.now())}</text></g>`;
+  }
+  // centre
+  g += `<circle cx="${DC}" cy="${DC}" r="${R_SKY0 - 8}" fill="var(--paper)"/>`;
+  g += `<text class="big" x="${DC}" y="${DC - 6}" text-anchor="middle">${num(d.score)}</text>`;
+  g += `<text class="of" x="${DC}" y="${DC + 14}" text-anchor="middle">из 10</text>`;
+  g += `<text class="verdict" x="${DC}" y="${DC + 34}" text-anchor="middle">${verdict(d.score)}</text>`;
+  const top = [...d.windows].sort((a,b) => b.peak - a.peak)[0];
   $('dial').innerHTML = g;
-  $('dial').setAttribute('aria-label', `${d.R.name}, ${dayTitle(d)}: ${verdict(d.score)}, ${d.score} из 10`);
+  $('dialTitle').textContent = `${d.R.name}, ${dayTitle(d).toLowerCase()} ${d.p.d} ${MONTHS_GEN[d.p.m]}`;
+  $('dialBest').textContent = top ? `Самый сильный клёв: ${fmt(top.from)}–${fmt(top.to)}` : '';
+  $('dial').setAttribute('aria-label', `${d.R.name}, ${dayTitle(d)}: ${verdict(d.score)}, ${d.score} из 10. Лучшее время ${top ? fmt(top.from) + '–' + fmt(top.to) : ''}`);
 }
 function spotRow(e, i){
   const why = e.cons.length ? `<div class="why bad">${esc(e.cons.join('; '))}</div>` : e.pros.length ? `<div class="why">${esc(e.pros.join('; '))}</div>` : '';
