@@ -103,6 +103,9 @@ h3{font-size:16px;margin:0 0 4px;font-weight:600}
 .pin.sel{border-color:var(--buoy);transform:scale(1.2)}
 .citylbl{font-family:var(--body);font-weight:600;font-size:13px;color:var(--ink);white-space:nowrap;text-shadow:0 0 3px var(--land),0 0 3px var(--land),0 0 2px var(--land)}
 .citylbl::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--ink);margin-right:4px;vertical-align:1px}
+.basetoggle{display:flex;background:var(--paper);border:1px solid var(--line);border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+.basetoggle button{border:0;background:none;padding:6px 10px;font-size:13px;cursor:pointer;color:var(--ink)}
+.basetoggle button[aria-pressed="true"]{background:var(--ink);color:var(--paper);font-weight:600}
 .mapnote{font-size:12px;color:var(--muted);padding:6px 2px}
 .detail{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-top:12px}
 .detail .row{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
@@ -799,34 +802,49 @@ function initMap(){
   markerLayer = L.layerGroup().addTo(map);
   tryTiles();
   renderMarkers();
-  flyToRegion(true);
+  setTimeout(() => { map.invalidateSize(); flyToRegion(true); }, 60);
 }
+let baseLayer = null, satLayer = null, baseMode = 'map';
 function tryTiles(){
-  // Inside claude.ai external tiles are blocked by the sandbox — keep the vector coast there.
+  // No API keys needed. OSM first, Esri street map as backup; Esri imagery for the satellite view.
   const providers = [
     {url:'https://tile.openstreetmap.org/{z}/{x}/{y}.png', opt:{maxZoom:19, attribution:'© OpenStreetMap'}},
-    {url:'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', opt:{maxZoom:19, subdomains:'abcd', attribution:'© OpenStreetMap © CARTO'}}
+    {url:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', opt:{maxZoom:19, attribution:'© Esri, OpenStreetMap'}}
   ];
   const attempt = i => {
     if(i >= providers.length) return;
-    const p = providers[i];
-    const layer = L.tileLayer(p.url, {...p.opt, crossOrigin:true});
+    const p = providers[i], layer = L.tileLayer(p.url, p.opt);
     let loaded = 0, failed = 0, switched = false;
     layer.on('tileload', () => {
       loaded++;
       if(switched) return;
-      switched = true; tilesOn = true;
+      switched = true; tilesOn = true; baseLayer = layer;
       vectorLayers.forEach(l => map.removeLayer(l));
       map.setMaxZoom(18);
-      $('mapNote').textContent = 'Номер на метке — место в рейтинге своего города на выбранный день.';
+      addBaseToggle();
+      if(!selSpot) flyToRegion(true);
     });
-    layer.on('tileerror', () => {
-      failed++;
-      if(!loaded && failed >= 3){ map.removeLayer(layer); attempt(i + 1); }
-    });
+    layer.on('tileerror', () => { failed++; if(!loaded && failed >= 3){ map.removeLayer(layer); attempt(i + 1); } });
     layer.addTo(map).bringToBack();
   };
   attempt(0);
+}
+function addBaseToggle(){
+  if(map._baseToggle) return;
+  satLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {maxZoom:19, attribution:'Спутник © Esri, Maxar, Earthstar Geographics'});
+  const Ctl = L.Control.extend({options:{position:'topright'}, onAdd(){
+    const box = L.DomUtil.create('div', 'basetoggle');
+    box.innerHTML = '<button data-m="map" aria-pressed="true">Схема</button><button data-m="sat" aria-pressed="false">Спутник</button>';
+    L.DomEvent.disableClickPropagation(box);
+    box.querySelectorAll('button').forEach(b => b.onclick = () => {
+      baseMode = b.dataset.m;
+      box.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b));
+      if(baseMode === 'sat'){ map.removeLayer(baseLayer); satLayer.addTo(map).bringToBack(); }
+      else { map.removeLayer(satLayer); baseLayer.addTo(map).bringToBack(); }
+    });
+    return box;
+  }});
+  map._baseToggle = new Ctl().addTo(map);
 }
 function flyToRegion(instant){
   const pts = SPOTS.filter(s => s.r === region).map(s => [s.lat, s.lng]);
@@ -878,13 +896,42 @@ function renderDetail(){
 
 /* ---- fish photos (Wikipedia) ---- */
 const PHOTOS = {};
+const PHOTO_ALT = {
+  scad:['Decapterus maruadsi','Decapterus macarellus','Decapterus russelli'],
+  sillago:['Sillago sihama','Sillago ciliata','Sillago japonica'],
+  barracuda:['Sphyraena jello','Sphyraena barracuda']
+};
+const BAD_IMG = /(map|distribution|range|drawing|illustration|plate|diagram|skeleton|\.svg|\.png|\.gif|\.tif)/i;
+const okImg = name => /\.jpe?g$/i.test(name) && !BAD_IMG.test(name);
+const up = (url, w) => url.replace(/\/\d+px-/, '/' + w + 'px-');
+async function getJSON(url){ const r = await fetch(url); if(!r.ok) throw new Error(r.status); return r.json(); }
+// 1) photo from the species article (jpg only, no drawings or maps)
+async function fromArticle(title){
+  const t = encodeURIComponent(title.replace(/ /g, '_'));
+  const j = await getJSON(`https://en.wikipedia.org/api/rest_v1/page/media-list/${t}`);
+  const it = (j.items || []).find(i => i.type === 'image' && i.srcset && okImg(i.title || ''));
+  if(!it) throw 0;
+  const src = 'https:' + it.srcset[0].src;
+  return {src:up(src, 400), big:up(src, 800), page:`https://en.wikipedia.org/wiki/${t}`};
+}
+// 2) any real photo of the species on Wikimedia Commons
+async function fromCommons(title){
+  const q = encodeURIComponent(`"${title}" filetype:bitmap`);
+  const j = await getJSON(`https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=${q}&gsrnamespace=6&gsrlimit=15&prop=imageinfo&iiprop=url&iiurlwidth=800&format=json&origin=*`);
+  const pages = Object.values((j.query && j.query.pages) || {}).sort((a,b) => (a.index || 0) - (b.index || 0));
+  const p = pages.find(x => okImg(x.title) && x.imageinfo && x.imageinfo[0].thumburl);
+  if(!p) throw 0;
+  const u = p.imageinfo[0].thumburl;
+  return {src:up(u, 400), big:u, page:p.imageinfo[0].descriptionurl};
+}
 function loadPhoto(id){
   if(PHOTOS[id]) return PHOTOS[id];
-  const title = FISH[id].lat.replace(/ /g, '_');
-  const get = lang => fetch(`https://${lang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`)
-    .then(r => r.ok ? r.json() : Promise.reject(r.status))
-    .then(j => { if(!j.thumbnail) throw 0; return {src:j.thumbnail.source, big:j.thumbnail.source.replace(/\/\d+px-/, '/640px-'), page:j.content_urls.desktop.page}; });
-  return PHOTOS[id] = get('en').catch(() => get('ru')).catch(() => null);
+  const titles = PHOTO_ALT[id] || [FISH[id].lat];
+  return PHOTOS[id] = (async () => {
+    for(const t of titles){ try{ return await fromArticle(t); }catch(e){} }
+    for(const t of titles){ try{ return await fromCommons(t); }catch(e){} }
+    return null;
+  })();
 }
 function fishPic(id, big){
   const f = FISH[id];
@@ -901,7 +948,7 @@ function hydratePhotos(root){
         el.innerHTML = '';
         el.appendChild(img);
         el.classList.add('photo');
-        if(big){ const c = document.createElement('a'); c.href = p.page; c.target = '_blank'; c.rel = 'noopener'; c.className = 'credit'; c.textContent = 'Фото: Википедия'; el.appendChild(c); }
+        if(big){ const c = document.createElement('a'); c.href = p.page; c.target = '_blank'; c.rel = 'noopener'; c.className = 'credit'; c.textContent = 'Фото: Wikimedia'; el.appendChild(c); }
       };
       img.src = big ? p.big : p.src;
     });
@@ -956,7 +1003,7 @@ function go(tab){
   $('regions').style.display = showTop ? '' : 'none';
   if(tab === 'map'){
     renderSpotList(); renderDetail();
-    if(!map) initMap(); else { map.invalidateSize(); renderMarkers(); }
+    if(!map) initMap(); else { setTimeout(() => map.invalidateSize(), 60); renderMarkers(); }
     if(selSpot && map){ const s = SPOTS.find(x => x.id === selSpot); map.setView([s.lat, s.lng], tilesOn ? 15 : 11.5); }
   }
   if(tab === 'fish') renderFish();
