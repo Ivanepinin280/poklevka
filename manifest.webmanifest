@@ -1,0 +1,13 @@
+{
+  "name": "Поклёвка — рыбалка на юге Вьетнама",
+  "short_name": "Поклёвка",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#E7EDEF",
+  "theme_color": "#13324A",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
