@@ -218,6 +218,21 @@ ul.tips li{margin:6px 0}
 .wday .ww{font-size:13px;display:flex;align-items:center;gap:3px}
 .wday .wb{font-family:var(--display);font-size:13px;color:var(--buoy);text-align:right}
 @media (max-width:440px){.wday{grid-template-columns:62px 30px 36px 26px 1fr 26px 40px;}.wday .wb{display:none}}
+.themebtn{display:flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--paper);border-radius:999px;padding:6px 12px;cursor:pointer;font-size:13px;color:var(--ink);flex:0 0 auto}
+.themebtn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round}
+header.top{align-items:center!important}
+header.top .place{margin-top:2px}
+html.is-dark #map:not(.sat) .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(.85) contrast(.9) saturate(.8)}
+.aihead{display:flex;justify-content:space-between;align-items:baseline}
+.chat{display:flex;flex-direction:column;gap:10px;margin:8px 0 12px}
+.msg{max-width:88%;padding:10px 14px;border-radius:16px;white-space:pre-wrap;line-height:1.5;font-size:15px}
+.msg.user{align-self:flex-end;background:var(--ink);color:var(--paper);border-bottom-right-radius:4px}
+.msg.assistant{align-self:flex-start;background:var(--paper);border:1px solid var(--line);border-bottom-left-radius:4px}
+.msg.pending{color:var(--muted)}
+.ask{position:sticky;bottom:calc(64px + env(safe-area-inset-bottom,0px));background:var(--bg);padding:8px 0}
+.codeform{display:flex;gap:8px;margin-top:8px}
+.codeform input{flex:1;border:1px solid var(--line);border-radius:10px;padding:8px 10px;font:inherit;background:var(--paper);color:var(--ink)}
+code{font-size:13px;background:var(--sea-soft);padding:1px 5px;border-radius:4px}
 .fdetail{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:12px 16px 16px;margin-bottom:14px}
 .fdetail svg{width:100%;max-width:460px;height:auto;display:block;margin:0 auto}
 .fdetail dl{display:grid;grid-template-columns:110px 1fr;gap:4px 12px;margin:6px 0 12px;font-size:15px}
@@ -245,6 +260,7 @@ ul.safety li{margin:6px 0}
 
 nav.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--paper);border-top:1px solid var(--line);display:flex;justify-content:center;padding-bottom:env(safe-area-inset-bottom,0px);z-index:1000}
 nav.tabs .in{display:flex;max-width:760px;width:100%}
+nav.tabs button[hidden]{display:none}
 nav.tabs button{flex:1;min-width:0;background:none;border:0;padding:10px 2px 12px;font-size:12px;color:var(--muted);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px}
 nav.tabs button svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 nav.tabs button[aria-selected="true"]{color:var(--ink);font-weight:600}
@@ -252,13 +268,14 @@ nav.tabs button[aria-selected="true"] svg{stroke:var(--buoy)}
 section[hidden]{display:none}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
+<script>try{var m=localStorage.getItem('poklevka-theme');if(m==='light'||m==='dark')document.documentElement.setAttribute('data-theme',m);}catch(e){}</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 </head>
 <body>
 <div class="wrap">
   <header class="top">
-    <h1 class="brand">Поклёвка</h1>
-    <span class="place">юг Вьетнама, ловля с берега</span>
+    <div><h1 class="brand">Поклёвка</h1><div class="place">юг Вьетнама, ловля с берега</div></div>
+    <button class="themebtn" id="themeBtn" aria-label="Тема"></button>
   </header>
   <p class="banner" id="wxBanner" hidden></p>
 
@@ -331,15 +348,15 @@ section[hidden]{display:none}
   </section>
 
   <section id="tab-ai" hidden>
-    <h2 style="margin-top:6px">Спросить совет</h2>
+    <div class="aihead"><h2 style="margin:6px 0 4px">Советник</h2><button class="linkbtn" id="aiReset" hidden>Новый разговор</button></div>
     <p class="small muted" id="aiState">Подключаю советника…</p>
     <div id="aiBox" hidden>
-      <div class="chips" id="aiChips"></div>
+      <div id="aiEmpty"><p class="small muted" style="margin:0 0 6px">Например:</p><div class="chips" id="aiChips"></div></div>
+      <div id="aiChat" class="chat" aria-live="polite"></div>
       <div class="ask">
-        <textarea id="aiInput" placeholder="Например: что взять на латеса в устье вечером?"></textarea>
-        <button class="btn" id="aiSend">Спросить</button>
+        <textarea id="aiInput" rows="2" placeholder="Спросите что угодно о рыбалке"></textarea>
+        <button class="btn" id="aiSend">Отправить</button>
       </div>
-      <div class="answer" id="aiOut" hidden></div>
     </div>
   </section>
 </div>
@@ -428,6 +445,14 @@ const SPOTS = [
   {id:'nghinhphong', r:'vungtau', name:'Мыс Нгинь Фонг', vn:'Mũi Nghinh Phong', lat:10.321, lng:107.081, type:'rocks', bearing:180, shelter:.2, pref:'twilight', fish:['grouper','snapper','siganus','barracuda'], tackle:'Силикон, донка с кальмаром, поппер на рассвете.', note:'Южная оконечность Вунгтау, камни по обе стороны мыса.', access:'Город'},
   {id:'baidau', r:'vungtau', name:'Скалы Бай Зау', vn:'Bãi Dâu', lat:10.37, lng:107.065, type:'rocks', bearing:260, shelter:.7, pref:'tide', fish:['siganus','snapper','mullet','grouper'], tackle:'Поплавок с креветкой, лёгкий спиннинг.', note:'Западная сторона полуострова, смотрит в залив — тише, чем открытое море.', access:'Город'},
   {id:'dinhco', r:'vungtau', name:'Скалы Динь Ко, Лонгхай', vn:'Dinh Cô, Long Hải', lat:10.39, lng:107.24, type:'rocks', bearing:170, shelter:.3, pref:'twilight', fish:['grouper','karanks','terapon','needlefish'], tackle:'Спиннинг 10–40 г, донка с креветкой.', note:'Каменистый мыс у храма Динь Ко.', access:'30 мин от Вунгтау'},
+  // Mangrove crab
+  {id:'crab_ninhich', r:'nhatrang', name:'Мангры Нинь Ич, лагуна Нячу', vn:'Rừng ngập mặn Ninh Ích', lat:12.405, lng:109.165, type:'mangrove', bearing:120, shelter:1, pref:'night', fish:['crab','snapper','lates'], tackle:'Ловушки-раколовки с рыбьими головами вдоль протоки, шнур с приманкой у корней, подсачек.', note:'Мангровые протоки на северном берегу лагуны. Заходите на отливе, когда открываются илистые берега и норы. Местные ставят ловушки на ночь — не трогайте чужие.', access:'40 мин на север от Нячанга'},
+  {id:'crab_thuytrieu', r:'camranh', name:'Мангры лагуны Тхюй Чиеу', vn:'Đầm Thủy Triều, Cam Hải Tây', lat:12.045, lng:109.16, type:'mangrove', bearing:90, shelter:1, pref:'night', fish:['crab','lates','siganus'], tackle:'Шнур с куриной шеей или рыбьей головой, подсачек; 2–3 ловушки на ночь.', note:'Западный берег лагуны с мангровыми зарослями и илистыми отмелями. Вокруг много хозяйств — ловите только в свободных протоках.', access:'25 мин от аэропорта Камрань'},
+  {id:'crab_oloan', r:'tuyhoa', name:'Лагуна О Лоан, илистые берега', vn:'Đầm Ô Loan', lat:13.285, lng:109.265, type:'mangrove', bearing:90, shelter:1, pref:'night', fish:['crab','lates','mullet'], tackle:'Ловушки с приманкой, шнур у дамб и мостиков, налобный фонарь.', note:'Лагуна известна своими крабами — их подают во всех местных ресторанах. Ловят с дамб и у зарослей вдоль западного берега.', access:'25 км на север от Туихоа'},
+  {id:'crab_thinai', r:'quynhon', name:'Мангры лагуны Тхи Най', vn:'Rừng ngập mặn Thị Nại', lat:13.84, lng:109.21, type:'mangrove', bearing:90, shelter:1, pref:'night', fish:['crab','lates','snapper'], tackle:'Ловушки и шнур с приманкой вдоль проток, подсачек.', note:'Восстановленный мангровый лес в северной части лагуны. Часть территории — охраняемая: ловите только там, где ловят местные.', access:'20 мин от центра Куинёна'},
+  {id:'crab_damnai', r:'phanrang', name:'Лагуна Дам Най', vn:'Đầm Nại', lat:11.635, lng:109.03, type:'mangrove', bearing:90, shelter:1, pref:'night', fish:['crab','mullet','terapon'], tackle:'Шнур с приманкой и подсачек на отливе, ловушки на ночь.', note:'Солоноватая лагуна с участками восстановленных мангров к северу от Фанранга.', access:'15 мин от Фанранга'},
+  {id:'crab_longson', r:'vungtau', name:'Мангры острова Лонгшон', vn:'Long Sơn', lat:10.45, lng:107.11, type:'mangrove', bearing:270, shelter:1, pref:'night', fish:['crab','lates','snapper'], tackle:'Ловушки и шнур с приманкой вдоль проток, подсачек, сапоги.', note:'Рыбацкий остров с протоками в мангровых зарослях. Многие протоки заняты хозяйствами — спросите у местных, где можно ставить ловушки.', access:'30 мин от Вунгтау'},
+  {id:'crab_cangio', r:'vungtau', name:'Канзё, мангровый лес', vn:'Rừng Sác Cần Giờ', lat:10.52, lng:106.88, type:'mangrove', bearing:180, shelter:1, pref:'tide', fish:['crab'], tackle:'В эко-парках выдают снасти и приманку.', note:'Крупнейший мангровый заповедник юга (биосферный резерват ЮНЕСКО). Самостоятельная ловля в заповеднике ограничена — ловите в эко-парках и у хозяйств, где это предлагают туристам.', access:'Паром из Вунгтау, затем 40 мин'},
   // Da Lat (fresh)
   {id:'tuyenlam', r:'dalat', name:'Озеро Туен Лам', vn:'Hồ Tuyền Lâm', lat:11.895, lng:108.425, type:'lake', bearing:0, shelter:1, pref:'twilight', fish:['carp','tilapia','snakehead'], tackle:'Фидер или поплавок на карпа, лёгкий спиннинг с лягушкой на змееголова.', note:'Большое водохранилище в соснах. Есть платные рыболовные площадки.', access:'15 мин от центра Далата'},
   {id:'dankia', r:'dalat', name:'Озеро Данкиа', vn:'Hồ Đankia', lat:11.99, lng:108.36, type:'lake', bearing:0, shelter:1, pref:'twilight', fish:['carp','tilapia','catfish','snakehead'], tackle:'Донка с кукурузой и тестом на карпа, ночью — на сома.', note:'Тихое озеро у подножия Лангбианга, рыбачат местные.', access:'30 мин на север от Далата'}
@@ -464,7 +489,9 @@ const FISH = {
   snakehead:{name:'Змееголов', vn:'cá lóc', lat:'Channa striata', fresh:true, where:'Заросшие берега озёр', when:'Утро, вечер, жара', bait:'Лягушка, живец', lure:'Незацепляйка-лягушка, поверхностные приманки', tip:'Ловится в окнах травы. Подсечка с паузой, плетёнка потолще.',
     art:{d:.22,tail:'round',c1:'#4A4A3B',c2:'#A9A47F',fin:'#3E3E32',dorsal:'long',mouth:4,eye:5,pattern:'blotch',pc:'#26261c88'}},
   catfish:{name:'Сом клариас', vn:'cá trê', lat:'Clarias batrachus', fresh:true, where:'Илистые участки озёр', when:'Ночь', bait:'Червь, кусочки рыбы, печень', lure:'—', tip:'Донка ночью. Колючие грудные шипы — берите полотенцем.',
-    art:{d:.17,tail:'round',c1:'#3C3A41',c2:'#8F8A90',fin:'#2F2D33',dorsal:'long',mouth:3,eye:3,barbels:true,brow:.4}}
+    art:{d:.17,tail:'round',c1:'#3C3A41',c2:'#8F8A90',fin:'#2F2D33',dorsal:'long',mouth:3,eye:3,barbels:true,brow:.4}},
+  crab:{name:'Мангровый краб', vn:'cua bùn, cua biển', lat:'Scylla serrata', where:'Мангры, илистые берега лагун и проток', when:'Ночь и вечер, прилив после отлива', bait:'Рыбьи головы, куриные шеи', lure:'—', tip:'Клешни очень сильные — берите краба сзади за панцирь или в перчатках. Отпускайте мелких (меньше ладони) и самок с икрой под брюшком.',
+    art:{crab:true}}
 };
 
 const CHECKLIST = [
@@ -625,7 +652,11 @@ function regionDays(rid){
 }
 function spotEval(spot, d){
   const w = d.wx; let s = d.score; const pros = [], cons = [];
-  if(spot.type === 'lake'){
+  if(spot.type === 'mangrove'){
+    if(w.rainSum >= 25){ s -= 1; cons.push('ливень — вода в протоках поднимается'); }
+    if(d.sol.fraction < .3){ s += .5; pros.push('тёмная ночь — краб выходит кормиться'); }
+    pros.push('ловушку ставьте к вечеру, проверяйте на отливе');
+  } else if(spot.type === 'lake'){
     if(w.rainSum >= 15){ s -= .5; cons.push('ливень — вода мутнеет'); }
     if(w.wind < 4){ s += .3; pros.push('тихая вода'); }
   } else {
@@ -702,6 +733,7 @@ function rng(seed){ let s = seed; return () => (s = (s*16807) % 2147483647)/2147
 let GID = 0;
 function fishSVG(id, a, big){
   if(a.squid) return squidSVG(id);
+  if(a.crab) return crabSVG(id);
   const U = id + '-' + (++GID);
   const cy = 72, x0 = a.snout ?? 34, x1 = a.ped ?? 236, W = x1 - x0, h = a.d*62, ph = Math.max(5, h*(a.tail === 'round' ? .42 : .27));
   const top = cy - h, bot = cy + h, nose = cy + 2;
@@ -775,6 +807,27 @@ function fishSVG(id, a, big){
     <path d="${gill}" stroke="#00000040" stroke-width="1.6" fill="none"/>
     ${mouth}${barbels}
     <circle cx="${ex}" cy="${ey}" r="${er}" fill="${a.eyeC || '#F4F1E6'}"/><circle cx="${ex + er*.15}" cy="${ey}" r="${er*.55}" fill="#11181C"/><circle cx="${ex - er*.2}" cy="${ey - er*.3}" r="${er*.18}" fill="#fff"/>
+  </svg>`;
+}
+function crabSVG(id){
+  const leg = (x, y, dx, dy, k) => `<path d="M${x} ${y} q${dx*.6} ${dy*.2} ${dx} ${dy} l${dx*.3} ${dy*.55}" stroke="#4F5A2C" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`;
+  let legs = '';
+  [[-1,0],[1,0]].forEach(([sx]) => {
+    for(let i = 0; i < 3; i++) legs += leg(150 + sx*48, 82 + i*12, sx*38, 4 + i*10);
+    legs += `<path d="M${150 + sx*42} ${112} q${sx*22} 14 ${sx*30} 22" stroke="#4F5A2C" stroke-width="5" fill="none" stroke-linecap="round"/><ellipse cx="${150 + sx*72}" cy="135" rx="9" ry="5" fill="#5E6B33" transform="rotate(${sx*30} ${150 + sx*72} 135)"/>`;
+  });
+  const claw = sx => `<path d="M${150 + sx*48} 70 q${sx*30} -6 ${sx*44} -26" stroke="#5E6B33" stroke-width="9" fill="none" stroke-linecap="round"/>
+    <path d="M${150 + sx*92} 44 c${sx*8} -20 ${sx*40} -22 ${sx*48} -4 c${sx*4} 10 ${-sx*2} 16 ${-sx*12} 12 l${-sx*8} -4 c${sx*6} 8 ${sx*2} 16 ${-sx*10} 16 c${-sx*20} 0 ${-sx*28} -10 ${-sx*26} -20z" fill="#6E7A3A" stroke="#3F4A1F" stroke-width="1.4"/>
+    <path d="M${150 + sx*124} 30 l${sx*16} 8" stroke="#E07A3A" stroke-width="4" stroke-linecap="round"/>`;
+  return `<svg viewBox="0 0 300 150" role="img" aria-label="Мангровый краб">
+    ${legs}${claw(-1)}${claw(1)}
+    <path d="M96 76 C98 52 202 52 204 76 C206 100 176 116 150 116 C124 116 94 100 96 76Z" fill="#6B7838" stroke="#3F4A1F" stroke-width="1.6"/>
+    ${[0,1,2,3,4].map(i => `<path d="M${106 + i*4} ${70 - i*3} l-8 -2 l7 5" fill="#556126"/><path d="M${194 - i*4} ${70 - i*3} l8 -2 l-7 5" fill="#556126"/>`).join('')}
+    <path d="M120 74 Q150 60 180 74" stroke="#3F4A1F" stroke-width="1.4" fill="none" opacity=".6"/>
+    <path d="M128 92 Q150 100 172 92" stroke="#3F4A1F" stroke-width="1.2" fill="none" opacity=".5"/>
+    <ellipse cx="132" cy="80" rx="10" ry="6" fill="#8A9550" opacity=".5"/>
+    <path d="M138 58 v-8 M162 58 v-8" stroke="#3F4A1F" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="138" cy="48" r="4" fill="#1b1b1b"/><circle cx="162" cy="48" r="4" fill="#1b1b1b"/>
   </svg>`;
 }
 function squidSVG(id){
@@ -897,7 +950,7 @@ function renderDial(d){
 function spotRow(e, i){
   const why = e.cons.length ? `<div class="why bad">${esc(e.cons.join('; '))}</div>` : e.pros.length ? `<div class="why">${esc(e.pros.join('; '))}</div>` : '';
   return `<button class="spot" data-id="${e.spot.id}"><span class="rank">${i+1}</span>
-    <span><h3>${esc(e.spot.name)}</h3><div class="small muted">${fmt(e.from)}–${fmt(e.to)}. ${esc(e.spot.access)}</div>${why}</span>
+    <span><h3>${e.spot.type === 'mangrove' ? '🦀 ' : ''}${esc(e.spot.name)}</h3><div class="small muted">${fmt(e.from)}–${fmt(e.to)}. ${esc(e.spot.access)}</div>${why}</span>
     <span class="score">${num(e.score)}</span></button>`;
 }
 function renderDay(){
@@ -986,6 +1039,7 @@ function addBaseToggle(){
     box.querySelectorAll('button').forEach(b => b.onclick = () => {
       baseMode = b.dataset.m;
       box.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b));
+      $('map').classList.toggle('sat', baseMode === 'sat');
       if(baseMode === 'sat'){ map.removeLayer(baseLayer); satLayer.addTo(map).bringToBack(); }
       else { map.removeLayer(satLayer); baseLayer.addTo(map).bringToBack(); }
     });
@@ -1058,7 +1112,8 @@ const FISH_HOW = {
   carp:{rigs:['bottom','float'], baits:['corn','bread','earthworm'], lures:[]},
   tilapia:{rigs:['float'], baits:['earthworm','bread','corn'], lures:[]},
   snakehead:{rigs:['spin'], baits:['livebait'], lures:['frog','minnow']},
-  catfish:{rigs:['bottom'], baits:['earthworm'], lures:[]}
+  catfish:{rigs:['bottom'], baits:['earthworm'], lures:[]},
+  crab:{rigs:['crabline','crabtrap','crabhook'], baits:['crabbait'], lures:[]}
 };
 
 const BAIT_DB = {
@@ -1101,7 +1156,12 @@ const BAIT_DB = {
     buy:'Наловите сами на сабики утром у причала или купите у рыбаков в порту.',
     hook:'Проткните обе губы снизу вверх или под спинным плавником, не задевая позвоночник: рыбка должна плавать.',
     keep:'В ведре с аэратором, чаще меняйте воду.',
-    tip:'Самая сильная наживка на крупного хищника.'}
+    tip:'Самая сильная наживка на крупного хищника.'},
+  crabbait:{name:'Приманка для краба', vn:'đầu cá, cổ gà', photo:[],
+    buy:'Рыбьи головы и обрезки — даром или за копейки у рыбных рядов на рынке. Куриные шеи и спинки — в мясных рядах.',
+    hook:'Крючок не нужен. Привяжите приманку к шнуру прочным узлом или положите в сетчатый мешочек внутри ловушки. Чем сильнее пахнет — тем лучше.',
+    keep:'В пакете в тени. Слегка подтухшая приманка ловит даже лучше свежей.',
+    tip:'Краб находит еду по запаху: надрежьте рыбьи головы, чтобы сок шёл в воду.'}
 };
 
 const LURE_DB = {
@@ -1146,10 +1206,19 @@ const RIG_DB = {
     steps:['Привяжите сабики к леске, груз — к нижнему колечку.','Опустите оснастку под причал на нужную глубину.','Плавно поднимайте и опускайте удилище на 30–50 см.','Почувствовали дрожь — подождите пару секунд, может сесть ещё рыбка, и поднимайте.']},
   egi:{name:'Кальмар на эги', level:'просто',
     parts:'Спиннинг 2,4–2,7 м, плетёнка PE 0,6–0,8, флюр-поводок 0,25–0,3 мм, застёжка, эги 2,5–3,0.',
-    steps:['Привяжите поводок и застёжку, пристегните эги.','Забросьте к границе света и тени у фонаря, дайте утонуть.','2–3 резких подброса — пауза 5–10 секунд.','Тяжесть на леске — ровно подматывайте без рывков: кальмар держится щупальцами, крючка во рту нет.']}
+    steps:['Привяжите поводок и застёжку, пристегните эги.','Забросьте к границе света и тени у фонаря, дайте утонуть.','2–3 резких подброса — пауза 5–10 секунд.','Тяжесть на леске — ровно подматывайте без рывков: кальмар держится щупальцами, крючка во рту нет.']},
+  crabline:{name:'Краб на шнур', level:'проще всего',
+    parts:'Прочный шнур 3–5 м (или леска 0,5 мм на палке), камень или груз 50–100 г, приманка, подсачек с мелкой сеткой, перчатки, ведро.',
+    steps:['Привяжите к концу шнура груз, а над ним — рыбью голову или куриную шею.','Опустите приманку на дно у корней мангров или у края протоки. Шнур держите слегка натянутым.','Почувствовали, что шнур потянули, — не дёргайте. Медленно и плавно подтягивайте: краб держится за приманку клешнями.','Когда краб у поверхности, подведите подсачек снизу и поднимите его вместе с крабом.']},
+  crabtrap:{name:'Ловушка-раколовка', level:'просто',
+    parts:'Складная ловушка с воронками (продаётся в магазинах снастей как lồng bát quái или lờ cua), верёвка 5–10 м, яркий поплавок-буёк, приманка.',
+    steps:['Положите приманку в сетчатый мешочек внутри ловушки.','Опустите ловушку на дно протоки или у мангров, конец верёвки привяжите к буйку или корню.','Проверяйте каждые 30–60 минут или оставьте на ночь.','Вытряхивайте крабов в ведро, мелких и самок с икрой сразу отпускайте.']},
+  crabhook:{name:'Крюк для нор', level:'нужна практика',
+    parts:'Крюк из толстой проволоки длиной 60–80 см (móc cua), плотные перчатки, высокие сапоги, ведро с крышкой.',
+    steps:['На отливе найдите на илистом берегу норы диаметром 5–10 см со свежими следами.','Медленно введите крюк в нору, пока не почувствуете твёрдый панцирь.','Поддените краба под панцирь и аккуратно вытягивайте, не спеша.','Берите краба сзади за панцирь — так клешни не достанут. Это способ для опытных: начните с ловушки или шнура.']}
 };
 
-const SPOT_RIGS = {rocks:['jig','spin'], estuary:['float','jig'], lagoon:['jig','float'], pier:['egi','sabiki'], beach:['bottom','spin'], lake:['float','bottom']};
+const SPOT_RIGS = {mangrove:['crabline','crabtrap','crabhook'], rocks:['jig','spin'], estuary:['float','jig'], lagoon:['jig','float'], pier:['egi','sabiki'], beach:['bottom','spin'], lake:['float','bottom']};
 
 const BEGINNER = [
   {t:'С чего начать', body:`<p>Самый простой первый выезд: поплавочная удочка, живая или свежая креветка и мост или причал (в Нячанге — мост Хом Бонг или причал Кау Да). Там всегда есть рыба и местные, у которых можно подсмотреть.</p><p>Второй шаг — спиннинг с силиконом на джиг-голове. Это один комплект, которым ловится почти всё морское.</p>`},
@@ -1213,6 +1282,14 @@ const BAIT_ART = {
     return `${hookP(170, 24, 2)}${k(170, 64)}${k(170, 86)}${k(186, 108, 50)}
       ${k(60, 70, 20)}${k(84, 92, -30)}${k(52, 104, 70)}${k(96, 62, 10)}`;
   },
+  crabbait:() => `<path d="M40 70 C60 40 120 40 140 70 C120 100 60 100 40 70Z" fill="#AFC0C8" stroke="#6E8792" stroke-width="1.4"/>
+      <path d="M118 48 Q130 70 118 92" stroke="#B5482A" stroke-width="5" fill="none" opacity=".7"/>
+      <path d="M140 70 L150 58 L150 82Z" fill="#C98A7A"/>
+      <circle cx="66" cy="62" r="7" fill="#F4F1E6"/><circle cx="67" cy="62" r="3.6" fill="#111"/>
+      <path d="M44 76 l14 2" stroke="#4A5560" stroke-width="2"/>
+      <path d="M180 110 C176 80 196 56 214 50 C232 44 252 58 250 78 C248 96 232 106 226 120 C222 130 204 132 196 126 C188 122 182 118 180 110Z" fill="#F1C9A4" stroke="#C98F62" stroke-width="1.4"/>
+      ${[0,1,2,3,4].map(i => `<path d="M${194 + i*9} ${62 + i*10} q8 4 14 0" stroke="#C98F62" fill="none" stroke-width="1.4"/>`).join('')}
+      <path d="M150 20 C170 30 200 30 222 48" stroke="var(--ink)" stroke-width="2" fill="none"/><path d="M150 20 C120 18 100 30 90 44" stroke="var(--ink)" stroke-width="2" fill="none"/>`,
   livebait:() => {
     const inner = fishSVG('scad', FISH.scad.art).replace(/^<svg[^>]*>/, '').replace(/<\/svg>\s*$/, '');
     return `<g transform="translate(36 22) scale(.78)">${inner}</g>` + hookP(62, 40, 1.3, -20);
@@ -1311,8 +1388,41 @@ const RIG_ART = {
       <path d="M200 196 L180 120 L170 176 L150 110 L140 160" stroke="#E2532F" stroke-width="1.6" stroke-dasharray="4 4" fill="none"/>
       <g transform="translate(96 108) scale(.45)">${LURE_ART.egi()}</g>
       ${lbl(50, 56, 90, 36, 'PE 0,6–0,8 + поводок')}${lbl(140, 140, 100, 196, 'эги 2,5–3,0')}
-      <text class="rl" x="214" y="120">подброс</text><text class="rl" x="214" y="180">пауза 5–10 с</text>`)
+      <text class="rl" x="214" y="120">подброс</text><text class="rl" x="214" y="180">пауза 5–10 с</text>`),
+  crabline:() => {
+    const crab = crabSVG('x').replace(/^<svg[^>]*>/, '').replace(/<\/svg>\s*$/, '');
+    return rigFrame(`${mangroveBank}
+      <path d="M40 10 L150 62 V186" stroke="var(--ink)" stroke-width="1.6" fill="none"/>
+      <path d="M150 170 C142 160 160 152 168 162 C172 170 160 178 150 176Z" fill="#AFC0C8" stroke="#6E8792"/>
+      <ellipse cx="150" cy="194" rx="9" ry="7" fill="#4A5560"/>
+      <g transform="translate(158 156) scale(.33)">${crab}</g>
+      <path d="M240 40 L216 140" stroke="#B07A44" stroke-width="4"/><path d="M196 140 Q216 176 236 140Z" fill="none" stroke="var(--muted)" stroke-width="1.5"/><path d="M196 140 H236" stroke="#B07A44" stroke-width="3"/>
+      ${lbl(96, 36, 96, 22, 'шнур, без крючка')}${lbl(150, 176, 72, 150, 'приманка и груз')}${lbl(222, 150, 230, 230, 'подсачек')}`);
+  },
+  crabtrap:() => rigFrame(`${mangroveBank}
+      <path d="M150 62 C150 100 180 130 170 186" stroke="var(--ink)" stroke-width="1.4" fill="none"/>
+      <ellipse cx="150" cy="60" rx="12" ry="7" fill="#E2532F"/>
+      <rect x="120" y="182" width="120" height="34" rx="6" fill="none" stroke="var(--muted)" stroke-width="2"/>
+      ${[0,1,2,3,4,5,6].map(i => `<path d="M${134 + i*14} 182 V216" stroke="var(--muted)" stroke-width=".8"/>`).join('')}
+      <path d="M120 186 L140 199 L120 212 M240 186 L220 199 L240 212" stroke="var(--ink)" stroke-width="1.6" fill="none"/>
+      <ellipse cx="180" cy="200" rx="12" ry="7" fill="#AFC0C8" stroke="#6E8792"/>
+      ${lbl(158, 58, 190, 40, 'буёк на верёвке')}${lbl(128, 206, 96, 232, 'воронки — вход')}${lbl(180, 196, 200, 140, 'приманка внутри')}`),
+  crabhook:() => {
+    const crab = crabSVG('x').replace(/^<svg[^>]*>/, '').replace(/<\/svg>\s*$/, '');
+    return `<rect x="0" y="0" width="300" height="240" fill="var(--sea-soft)" opacity=".4"/>
+      <path d="M0 110 Q60 100 120 112 T300 106 V240 H0Z" fill="#8A7558"/>
+      <path d="M0 110 Q60 100 120 112 T300 106" stroke="#5E4E38" stroke-width="2" fill="none"/>
+      <path d="M150 112 C150 140 170 160 200 180" stroke="#3F3324" stroke-width="18" fill="none" stroke-linecap="round"/>
+      <g transform="translate(176 160) scale(.3)">${crab}</g>
+      <path d="M60 20 L156 120 C162 132 178 146 192 160 q8 8 0 12" stroke="${STEEL}" stroke-width="3.2" fill="none" stroke-linecap="round"/>
+      <path d="M60 20 l-14 -6" stroke="#B07A44" stroke-width="7" stroke-linecap="round"/>
+      ${[0,1,2].map(i => `<path d="M${240 + i*16} 106 q-6 -40 4 -80" stroke="#4F6B3A" stroke-width="5" fill="none"/>`).join('')}
+      ${lbl(150, 116, 190, 66, 'нора в иле')}${lbl(110, 76, 130, 30, 'крюк 60–80 см')}${lbl(196, 168, 120, 210, 'поддеть под панцирь')}`;
+  }
 };
+const mangroveBank = `<path d="M0 200 Q40 190 70 198 L90 240 H0Z" fill="#8A7558"/>
+  ${[0,1,2].map(i => `<g stroke="#5E4E38" stroke-width="3" fill="none"><path d="M${16 + i*22} 70 q-2 60 -8 128 M${16 + i*22} 130 q10 30 22 66 M${16 + i*22} 120 q-14 34 -20 76"/></g><ellipse cx="${18 + i*22}" cy="60" rx="20" ry="16" fill="#4F6B3A"/>`).join('')}
+  <path d="M0 218 Q40 210 80 218 T160 216 T240 220 T300 214 V240 H0Z" fill="#8A7558"/>`;
 
 function guideArt(kind, id, big){
   if(kind === 'fish') return fishSVG(id, FISH[id].art, big);
@@ -1712,45 +1822,151 @@ function weekList(days){
 }
 
 /* ================= ADVISOR ================= */
-let sample = null, aiCtl = null;
-function context(){
+const AI_SYSTEM = `Ты — опытный рыболов-гид по югу Вьетнама (побережье от Куинёна до Вунгтау и озёра Далата), ловля только с берега. Пользователь — новичок: объясняй простыми словами. Отвечай по-русски, коротко и по делу: куда ехать, во сколько, какая оснастка, наживка или приманка и как ловить. Опирайся на данные ниже, не выдумывай погоду и места. Помни о безопасности. Без таблиц и заголовков.`;
+let sample = null, aiCtl = null, aiMode = null, aiHistory = [], aiBusy = false;
+function contextData(){
   const days = regionDays(region), d = days[sel];
-  const week = days.map(x => `${dayTitle(x)} ${x.p.d} ${MONTHS_GEN[x.p.m]}: клёв ${x.score}/10, ветер ${Math.round(x.wx.wind)} м/с ${compass(x.wx.dir)}, дождь ${Math.round(x.wx.rainProb)}%, волна ${x.wx.wave != null ? x.wx.wave.toFixed(1) + ' м' : '—'}, луна ${moonName(x.sol.phase)}, лучшие места: ${x.spots.slice(0,3).map(e => e.spot.name + ' ' + e.score).join(', ')}`).join('\n');
+  const week = days.map(x => `${dayTitle(x)} ${x.p.d} ${MONTHS_GEN[x.p.m]}: клёв ${x.score}/10, ${Math.round(x.wx.tmin)}–${Math.round(x.wx.tmax)}°, ветер ${Math.round(x.wx.wind)} м/с ${compass(x.wx.dir)}, дождь ${Math.round(x.wx.rainProb)}%, волна ${x.wx.wave != null ? x.wx.wave.toFixed(1) + ' м' : '—'}, луна ${moonName(x.sol.phase)}, окна клёва ${x.windows.map(w => fmt(w.from) + '–' + fmt(w.to)).join(', ')}, лучшие места: ${x.spots.slice(0,3).map(e => e.spot.name + ' ' + e.score + (e.cons.length ? ' (' + e.cons.join('; ') + ')' : '')).join(', ')}`).join('\n');
   const other = REGIONS.filter(R => R.id !== region).map(R => { const x = regionDays(R.id)[sel]; return `${R.name}: ${x.score}/10, лучшее место ${x.spots[0].spot.name}`; }).join('; ');
-  return `Ты опытный рыболов-гид по югу Вьетнама (от Куинёна до Вунгтау и озёра Далата), ловля только с берега. Отвечай по-русски, коротко и конкретно: место, время, снасть, наживка/приманка. Не выдумывай погоду — используй данные ниже.${LIVE ? '' : ' Погода — средние значения для месяца, а не прогноз; упомяни это, если важно.'}
-Выбранный город: ${d.R.name}. Места: ${SPOTS.filter(s => s.r === region).map(s => `${s.name} (${s.type}; рыба: ${s.fish.map(f => FISH[f].name).join(', ')})`).join('; ')}.
+  const spots = SPOTS.filter(s => s.r === region).map(s => `${s.name} (${s.vn}; ${s.type}; ${s.access}; рыба: ${s.fish.map(f => FISH[f].name).join(', ')}; снасти: ${s.tackle}; заметка: ${s.note})`).join('\n');
+  const now = vnParts(Date.now());
+  return `Сейчас ${now.d} ${MONTHS_GEN[now.m]}, ${String(now.h).padStart(2,'0')}:${String(now.mi).padStart(2,'0')} по времени Вьетнама.
+Погода: ${LIVE ? 'живой прогноз Open-Meteo' : 'средние значения для месяца, не прогноз — скажи об этом, если важно'}.
+Выбранный город: ${d.R.name}. Выбранный день: ${dayTitle(d)} ${d.p.d} ${MONTHS_GEN[d.p.m]}.
+Места в городе:
+${spots}
 Неделя в этом городе:
 ${week}
-Выбранный день ${dayTitle(d)} ${d.p.d} ${MONTHS_GEN[d.p.m]}, в других городах: ${other}.
-Лучшие окна: ${d.windows.map(w => fmt(w.from) + '–' + fmt(w.to)).join(', ')}. Восход ${fmt(d.sol.sunrise)}, закат ${fmt(d.sol.sunset)}.`;
+Другие города в выбранный день: ${other}.
+Оснастки в гиде приложения: ${Object.values(RIG_DB).map(r => r.name).join(', ')}. Наживки: ${Object.values(BAIT_DB).map(b => b.name).join(', ')}. Приманки: ${Object.values(LURE_DB).map(l => l.name).join(', ')}.`;
+}
+const clean = s => s.replace(/\*\*(.+?)\*\*/g, '$1').replace(/^#+\s*/gm, '');
+function aiRender(){
+  const box = $('aiChat');
+  box.innerHTML = aiHistory.map((m,i) => `<div class="msg ${m.role}${m.pending ? ' pending' : ''}" data-i="${i}">${esc(m.role === 'assistant' ? clean(m.content || (m.pending ? 'Думаю…' : '')) : m.content)}</div>`).join('');
+  $('aiEmpty').hidden = aiHistory.length > 0;
+  $('aiReset').hidden = aiHistory.length === 0;
+  box.lastElementChild && box.lastElementChild.scrollIntoView({block:'nearest'});
+}
+function aiSetLast(text, done){
+  const last = aiHistory[aiHistory.length - 1];
+  last.content = text; if(done) delete last.pending;
+  const el = $('aiChat').lastElementChild;
+  if(el){ el.textContent = clean(text || 'Думаю…'); if(done) el.classList.remove('pending'); }
+}
+function aiNote(html){ $('aiState').innerHTML = html; }
+async function askServer(signal){
+  const code = (() => { try{ return localStorage.getItem('poklevka-code') || ''; }catch(e){ return ''; } })();
+  const msgs = aiHistory.filter(m => !m.pending).map(({role, content}) => ({role, content}));
+  const r = await fetch('/api/ask', {method:'POST', signal, headers:{'Content-Type':'application/json', ...(code ? {'X-Advisor-Code':code} : {})},
+    body:JSON.stringify({context:contextData(), messages:msgs})});
+  if(!r.ok){
+    let e = {}; try{ e = await r.json(); }catch(_){}
+    const err = new Error(e.error || String(r.status)); err.status = r.status; err.code = e.error; throw err;
+  }
+  const rd = r.body.getReader(), dec = new TextDecoder(); let text = '';
+  for(;;){ const {value, done} = await rd.read(); if(done) break; text += dec.decode(value, {stream:true}); aiSetLast(text); }
+  return text;
+}
+async function askSample(signal){
+  const msgs = aiHistory.filter(m => !m.pending).map(({role, content}) => ({role, content}));
+  msgs[0] = {role:'user', content:AI_SYSTEM + '\n\nДанные приложения:\n' + contextData() + '\n\nВопрос: ' + msgs[0].content};
+  const r = await sample(msgs, {signal, cache:false, onText:({text}) => aiSetLast(text)});
+  return r.text;
 }
 async function ask(q){
-  if(!sample || !q.trim()) return;
+  q = (q || '').trim();
+  if(!q || aiBusy || !aiMode) return;
+  aiBusy = true; $('aiSend').disabled = true; $('aiInput').value = '';
+  aiHistory.push({role:'user', content:q}, {role:'assistant', content:'', pending:true});
+  aiRender();
   if(aiCtl) aiCtl.abort();
   aiCtl = new AbortController();
-  const out = $('aiOut'); out.hidden = false; out.textContent = 'Думаю…'; $('aiSend').disabled = true;
   try{
-    await sample(context() + '\n\nВопрос: ' + q, {signal:aiCtl.signal, cache:false, onText:({text}) => { out.textContent = text || 'Думаю…'; }});
+    const text = aiMode === 'server' ? await askServer(aiCtl.signal) : await askSample(aiCtl.signal);
+    aiSetLast(text || 'Пустой ответ. Попробуйте переформулировать вопрос.', true);
   }catch(err){
-    if(err && err.code === 'not_granted') out.textContent = 'Советник не получил разрешение. Его можно включить в меню разрешений артефакта.';
-    else if(err && err.code === 'rate_limited') out.textContent = 'Слишком много вопросов подряд. Попробуйте через минуту.';
-    else if(err && err.name !== 'AbortError') out.textContent = 'Ответ не пришёл. Проверьте соединение и спросите ещё раз.';
-  }finally{ $('aiSend').disabled = false; }
+    aiHistory.splice(-2, 2); aiRender();
+    $('aiInput').value = q;
+    if(err.status === 401){ showCodeForm(); }
+    else if(err.code === 'no_key') aiNote('<b>Советник не настроен.</b> Добавьте переменную <code>ANTHROPIC_API_KEY</code> в Vercel → Settings → Environment Variables и сделайте Redeploy.');
+    else if(err.status === 404) aiNote('<b>Не найдена функция /api/ask.</b> Загрузите папку <code>api</code> с файлом <code>ask.js</code> в корень репозитория.');
+    else if(err.status === 429 || err.code === 'rate_limited') aiNote('Слишком много вопросов подряд. Подождите пару минут.');
+    else if(err.code === 'not_granted') aiNote('Советник не получил разрешение. Его можно включить в меню разрешений артефакта.');
+    else if(err.name !== 'AbortError') aiNote('Ответ не пришёл. Проверьте интернет и спросите ещё раз.');
+  }finally{ aiBusy = false; $('aiSend').disabled = false; }
 }
+function showCodeForm(){
+  aiNote(`Введите код доступа к советнику (он задан в Vercel как <code>ADVISOR_CODE</code>):
+    <span class="codeform"><input id="aiCode" type="password" autocomplete="off" placeholder="код"><button class="btn" id="aiCodeOk">Сохранить</button></span>`);
+  $('aiCodeOk').onclick = () => {
+    try{ localStorage.setItem('poklevka-code', $('aiCode').value.trim()); }catch(e){}
+    aiNote(READY_TEXT); ask($('aiInput').value);
+  };
+}
+const READY_TEXT = 'Советник знает прогноз клёва, погоду и места по всем городам на неделю. Спросите, куда поехать и что взять.';
 function initAI(){
-  const chips = ['Куда поехать в субботу?','В каком городе лучше клёв на этой неделе?','Что взять на латеса вечером?','Как ловить кальмара с причала?'];
+  const chips = ['Куда поехать в субботу?','Какой день лучший на этой неделе?','Я новичок, что купить для первой рыбалки?','Как ловить кальмара с причала?'];
   $('aiChips').innerHTML = chips.map(c => `<button class="chip">${esc(c)}</button>`).join('');
-  $('aiChips').querySelectorAll('.chip').forEach(c => c.onclick = () => { $('aiInput').value = c.textContent; ask(c.textContent); });
+  $('aiChips').querySelectorAll('.chip').forEach(c => c.onclick = () => ask(c.textContent));
   $('aiSend').onclick = () => ask($('aiInput').value);
   $('aiInput').onkeydown = e => { if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); ask($('aiInput').value); } };
-  const off = () => $('aiState').textContent = 'Советник работает, когда приложение открыто в Claude. Остальные разделы доступны полностью.';
+  $('aiReset').onclick = () => { if(aiCtl) aiCtl.abort(); aiHistory = []; aiRender(); };
+  const hideAI = () => { const b = document.querySelector('nav.tabs button[data-tab="ai"]'); if(b) b.hidden = true; if(curTab === 'ai') go('day'); };
+  const useServer = () => {
+    // Show the advisor only if /api/ask is deployed and configured (400 = alive, 401 = needs access code)
+    fetch('/api/ask', {method:'POST', headers:{'Content-Type':'application/json'}, body:'{}'})
+      .then(r => { if(r.status === 400 || r.status === 401){ aiMode = 'server'; aiNote(READY_TEXT); $('aiBox').hidden = false; aiRender(); } else hideAI(); })
+      .catch(hideAI);
+  };
+  const inClaude = /claude\.ai$|claudeusercontent\.com$/.test(location.hostname) || location.protocol === 'file:';
   if(window.claude && typeof window.claude.use === 'function'){
     window.claude.use('sample').then(s => {
-      sample = s;
-      if(s){ $('aiState').textContent = 'Советник знает прогноз клёва по всем городам на неделю. Спросите, куда поехать и что взять.'; $('aiBox').hidden = false; }
-      else off();
-    }).catch(off);
-  } else off();
+      if(s){ sample = s; aiMode = 'sample'; aiNote(READY_TEXT); $('aiBox').hidden = false; aiRender(); }
+      else if(!inClaude) useServer();
+      else aiNote('Советник сейчас недоступен.');
+    }).catch(() => inClaude ? aiNote('Советник сейчас недоступен.') : useServer());
+  } else if(!inClaude) useServer();
+  else hideAI();
+}
+
+/* ================= THEME ================= */
+const TK = 'poklevka-theme';
+const THEMES = [['auto','Авто'],['light','Светлая'],['dark','Тёмная']];
+function themeMode(){ try{ return localStorage.getItem(TK) || 'auto'; }catch(e){ return 'auto'; } }
+const mq = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : null;
+function isDark(){ const m = themeMode(); return m === 'dark' || (m === 'auto' && mq && mq.matches); }
+function applyTheme(mode, rerender){
+  try{ localStorage.setItem(TK, mode); }catch(e){}
+  const root = document.documentElement;
+  if(mode === 'auto') root.removeAttribute('data-theme'); else root.setAttribute('data-theme', mode);
+  root.classList.toggle('is-dark', isDark());
+  const meta = document.querySelector('meta[name="theme-color"]'); if(meta) meta.setAttribute('content', isDark() ? '#0D1F2D' : '#E7EDEF');
+  const btn = $('themeBtn');
+  if(btn){
+    const icons = {auto:'<circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor"/>', light:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>', dark:'<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/>'};
+    btn.innerHTML = `<svg viewBox="0 0 24 24">${icons[mode]}</svg><span>${THEMES.find(t => t[0] === mode)[1]}</span>`;
+    btn.setAttribute('aria-label', 'Тема: ' + THEMES.find(t => t[0] === mode)[1]);
+  }
+  if(rerender){
+    restyleMap();
+    renderAll();
+    if(curTab === 'fish') renderGuide();
+  }
+}
+function restyleMap(){
+  if(!map || !vectorLayers.length) return;
+  const css = getComputedStyle(document.documentElement), c = n => css.getPropertyValue(n).trim();
+  const [land, prov, rivers, roads] = vectorLayers;
+  land.eachLayer(l => l.setStyle({color:c('--land-line'), fillColor:c('--land')}));
+  prov.eachLayer(l => l.setStyle({color:c('--muted')}));
+  rivers.eachLayer(l => l.setStyle({color:c('--sea')}));
+  roads.eachLayer(l => l.setStyle({color:c('--road')}));
+}
+function initTheme(){
+  $('themeBtn').onclick = () => { const i = THEMES.findIndex(t => t[0] === themeMode()); applyTheme(THEMES[(i + 1) % 3][0], true); };
+  if(mq) (mq.addEventListener ? mq.addEventListener('change', () => { if(themeMode() === 'auto') applyTheme('auto', true); }) : mq.addListener(() => { if(themeMode() === 'auto') applyTheme('auto', true); }));
+  applyTheme(themeMode(), false);
 }
 
 /* ================= BOOT ================= */
@@ -1760,7 +1976,7 @@ function setBanner(){
   b.hidden = false;
   b.innerHTML = '<b>Погода — средняя для этого месяца, не прогноз.</b> Время клёва, луна и солнце рассчитаны точно. Живой прогноз подгружается с Open-Meteo, когда приложение запущено на обычном хостинге. Свежий прогноз: <a href="https://www.windy.com/12.245/109.195" target="_blank" rel="noopener">Windy</a>.';
 }
-renderAll(); renderCheck(); setBanner(); initAI();
+initTheme(); renderAll(); renderCheck(); setBanner(); initAI();
 loadWeather().then(w => { WX = w; LIVE = true; for(const k in cache) delete cache[k]; setBanner(); renderAll(); })
              .catch(() => { LIVE = false; setBanner(); });
 </script>
