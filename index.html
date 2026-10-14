@@ -140,6 +140,32 @@ h3{font-size:16px;margin:0 0 4px;font-weight:600}
 .fimg .credit{position:absolute;right:8px;bottom:6px;font-size:11px;background:rgba(0,0,0,.55);color:#fff;padding:2px 6px;border-radius:4px;text-decoration:none}
 .fcard b{display:block;font-weight:600}
 .fcard span{font-size:13px;color:var(--muted)}
+.chiprow{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 10px}
+.mini{display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--paper);border-radius:12px;padding:4px 12px 4px 4px;cursor:pointer;font-size:14px;text-align:left}
+.mini .th{width:64px;height:34px;display:block;border-radius:8px;background:var(--sea-soft);overflow:hidden;flex:0 0 auto}
+.mini .th svg{width:100%;height:100%;display:block}
+.mini:hover{border-color:var(--sea)}
+h4{font-size:14px;margin:14px 0 4px;color:var(--muted);font-weight:600}
+.howto{display:grid;grid-template-columns:minmax(0,220px) 1fr;gap:14px;align-items:center;background:var(--bg);border-radius:12px;padding:10px 12px;margin:12px 0}
+.howto p{margin:0}
+.howart svg{width:100%;height:auto;display:block}
+@media (max-width:520px){.howto{grid-template-columns:1fr}}
+.fimg.rig svg{background:transparent}
+.fdetail .fimg.rig{max-width:420px;margin:0 auto 10px}
+.rl{font-family:var(--body);font-size:11px;fill:var(--ink)}
+ol.steps{padding-left:22px;margin:8px 0}
+ol.steps li{margin:6px 0}
+.acc{border-bottom:1px solid var(--line)}
+.acc summary{cursor:pointer;padding:12px 0;font-weight:600;list-style:none}
+.acc summary::-webkit-details-marker{display:none}
+.acc summary::after{content:"+";float:right;color:var(--muted);font-weight:400}
+.acc[open] summary::after{content:"−"}
+.accbody{padding:0 0 12px}
+.accbody p{margin:0 0 8px}
+.accbody ul,.accbody ol{margin:0 0 8px;padding-left:20px}
+.accbody td{padding:6px 10px 6px 0}
+ul.tips{margin:0;padding-left:20px}
+ul.tips li{margin:6px 0}
 .fdetail{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:12px 16px 16px;margin-bottom:14px}
 .fdetail svg{width:100%;max-width:460px;height:auto;display:block;margin:0 auto}
 .fdetail dl{display:grid;grid-template-columns:110px 1fr;gap:4px 12px;margin:6px 0 12px;font-size:15px}
@@ -201,6 +227,8 @@ section[hidden]{display:none}
     </div>
     <h2>Лучшее время</h2>
     <div class="windows" id="windows"></div>
+    <h2>Советы на сегодня</h2>
+    <div id="dayTips"></div>
     <h2 id="topTitle">Куда поехать</h2>
     <div id="topSpots"></div>
     <button class="linkbtn" data-goto="map">Все места на карте</button>
@@ -219,14 +247,12 @@ section[hidden]{display:none}
   </section>
 
   <section id="tab-fish" hidden>
-    <h2 style="margin-top:6px">Кто клюёт</h2>
+    <h2 style="margin-top:6px">Гид рыболова</h2>
+    <div class="regions" id="guideSecs" role="group" aria-label="Раздел гида"></div>
+    <p class="small muted" id="guideIntro" style="margin:0 0 10px"></p>
     <div class="fishfilter" id="fishFilter"></div>
-    <div id="fishDetail"></div>
-    <div class="fishgrid" id="fishGrid"></div>
-    <h2>Наживки</h2>
-    <div class="tbl"><table id="baitTbl"></table></div>
-    <h2>Приманки</h2>
-    <div class="tbl"><table id="lureTbl"></table></div>
+    <div id="guideDetail"></div>
+    <div class="fishgrid" id="guideGrid"></div>
   </section>
 
   <section id="tab-gear" hidden>
@@ -265,7 +291,7 @@ section[hidden]{display:none}
   <div class="in" role="tablist">
     <button role="tab" data-tab="day" aria-selected="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 7v5l3 2"/></svg>День</button>
     <button role="tab" data-tab="map" aria-selected="false"><svg viewBox="0 0 24 24"><path d="M12 21s-6-5.5-6-11a6 6 0 0 1 12 0c0 5.5-6 11-6 11z"/><circle cx="12" cy="10" r="2.2"/></svg>Карта</button>
-    <button role="tab" data-tab="fish" aria-selected="false"><svg viewBox="0 0 24 24"><path d="M3 12c3-4 8-6 13-3l4-3v12l-4-3c-5 3-10 1-13-3z"/><circle cx="15" cy="11" r=".8"/></svg>Рыба</button>
+    <button role="tab" data-tab="fish" aria-selected="false"><svg viewBox="0 0 24 24"><path d="M3 12c3-4 8-6 13-3l4-3v12l-4-3c-5 3-10 1-13-3z"/><circle cx="15" cy="11" r=".8"/></svg>Гид</button>
     <button role="tab" data-tab="gear" aria-selected="false"><svg viewBox="0 0 24 24"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9"/></svg>Сборы</button>
     <button role="tab" data-tab="ai" aria-selected="false"><svg viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>Совет</button>
   </div>
@@ -383,24 +409,6 @@ const FISH = {
     art:{d:.17,tail:'round',c1:'#3C3A41',c2:'#8F8A90',fin:'#2F2D33',dorsal:'long',mouth:3,eye:3,barbels:true,brow:.4}}
 };
 
-const BAITS = [
-  ['Живая креветка (tôm sống)','Латес, групер, люциан','Рынки ранним утром. Держите в ведре с аэратором.'],
-  ['Кальмар нарезкой (mực)','Люциан, групер, тераподон','Дёшево на рынке, хорошо держится на крючке.'],
-  ['Морской червь (sá sùng, trùn biển)','Силлаго, тераподон, сиган','Дорогой, но лучший для донки с пляжа.'],
-  ['Мясо моллюсков (ngao, sò)','Сиган, мелочь','Замена, если нет креветки.'],
-  ['Хлеб, тесто','Кефаль, сиган, тиляпия, карп','Для прикормки и поплавка.'],
-  ['Кукуруза','Карп','Для озёр Далата, с прикормкой.'],
-  ['Живец (cá nục, мелочь)','Каранкс, барракуда, групер','Ловите сабики на месте утром.']
-];
-const LURES = [
-  ['Минноу 9–12 см','Латес, барракуда','Вечер в устье, медленная проводка с паузами'],
-  ['Поппер 7–10 см','Каранкс, барракуда, сарган','Рассвет на мысах, штиль'],
-  ['Пилькер, кастмастер 20–40 г','Каранкс, барракуда, ставрида','Дальний заброс с камней и пляжа'],
-  ['Силикон 3–4" на джиг-голове','Групер, латес, люциан','У камней и опор, ступенька по дну'],
-  ['Эги 2.5–3.0','Кальмар','Ночь у фонарей причала'],
-  ['Сабики','Ставрида, мелочь на живца','Утро с причала'],
-  ['Лягушка-незацепляйка','Змееголов','Окна в траве на озёрах']
-];
 const CHECKLIST = [
   'Спиннинг 2.4–3 м, тест 10–40 г','Катушка 3000–4000 с плетёнкой PE 1–1.5','Флюрокарбон 0.4–0.6 мм на поводки',
   'Крючки №10 – 4/0, вертлюжки, застёжки','Грузы 30–100 г для донки','Приманки под выбранное место',
@@ -621,8 +629,10 @@ async function loadWeather(){
 
 /* ================= FISH ART ================= */
 function rng(seed){ let s = seed; return () => (s = (s*16807) % 2147483647)/2147483647; }
+let GID = 0;
 function fishSVG(id, a, big){
   if(a.squid) return squidSVG(id);
+  const U = id + '-' + (++GID);
   const cy = 72, x0 = a.snout ?? 34, x1 = a.ped ?? 236, W = x1 - x0, h = a.d*62, ph = Math.max(5, h*(a.tail === 'round' ? .42 : .27));
   const top = cy - h, bot = cy + h, nose = cy + 2;
   const brow = a.brow ?? .15;
@@ -684,13 +694,13 @@ function fishSVG(id, a, big){
   const barbels = a.barbels ? `<path d="M${x0 + 4} ${nose + 2}q-14 10 -10 26M${x0 + 6} ${nose + 1}q-4 12 6 24M${x0 + 3} ${nose - 2}q-16 -2 -22 8" stroke="${a.fin}" stroke-width="1.6" fill="none" stroke-linecap="round"/>` : '';
   const pect = `<ellipse cx="${x0 + W*.29}" cy="${cy + h*.25}" rx="${12 + h*.12}" ry="${4 + h*.06}" transform="rotate(18 ${x0 + W*.29} ${cy + h*.25})" fill="${a.fin}" opacity=".75"/>`;
   return `<svg viewBox="${a.beak ? -30 : 0} 0 ${a.beak ? 330 : 300} 144" role="img" aria-label="${esc(FISH[id].name)}">
-    <defs><linearGradient id="g-${id}${big ? 'b' : ''}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${a.c1}"/><stop offset=".55" stop-color="${a.c1}" stop-opacity=".85"/><stop offset="1" stop-color="${a.c2}"/></linearGradient>
-    <clipPath id="c-${id}${big ? 'b' : ''}"><path d="${body}"/></clipPath></defs>
+    <defs><linearGradient id="g-${U}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${a.c1}"/><stop offset=".55" stop-color="${a.c1}" stop-opacity=".85"/><stop offset="1" stop-color="${a.c2}"/></linearGradient>
+    <clipPath id="c-${U}"><path d="${body}"/></clipPath></defs>
     <path d="${tail}" fill="${a.fin}"/>
     ${fins.map(f => `<path d="${f}" fill="${a.fin}" opacity=".9"/>`).join('')}
     ${beak}
-    <path d="${body}" fill="url(#g-${id}${big ? 'b' : ''})"/>
-    <g clip-path="url(#c-${id}${big ? 'b' : ''})">${pat}<path d="M${x0} ${cy + h*.15}Q${x0 + W*.5} ${cy + h*.35} ${x1} ${cy + ph*.2}" stroke="#ffffff55" stroke-width="1.4" fill="none"/></g>
+    <path d="${body}" fill="url(#g-${U})"/>
+    <g clip-path="url(#c-${U})">${pat}<path d="M${x0} ${cy + h*.15}Q${x0 + W*.5} ${cy + h*.35} ${x1} ${cy + ph*.2}" stroke="#ffffff55" stroke-width="1.4" fill="none"/></g>
     ${pect}
     <path d="${gill}" stroke="#00000040" stroke-width="1.6" fill="none"/>
     ${mouth}${barbels}
@@ -699,9 +709,9 @@ function fishSVG(id, a, big){
 }
 function squidSVG(id){
   return `<svg viewBox="0 0 300 144" role="img" aria-label="Кальмар">
-    <defs><linearGradient id="g-sq" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#C98E7A"/><stop offset="1" stop-color="#F1DCD2"/></linearGradient></defs>
+    <defs><linearGradient id="g-sq-${++GID}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#C98E7A"/><stop offset="1" stop-color="#F1DCD2"/></linearGradient></defs>
     <path d="M150 72C150 46 200 34 262 52C276 56 284 64 286 72C284 80 276 88 262 92C200 110 150 98 150 72Z" fill="#E7B9A6" opacity=".7"/>
-    <path d="M150 72C150 54 196 46 252 58C266 62 272 66 274 72C272 78 266 82 252 86C196 98 150 90 150 72Z" fill="url(#g-sq)"/>
+    <path d="M150 72C150 54 196 46 252 58C266 62 272 66 274 72C272 78 266 82 252 86C196 98 150 90 150 72Z" fill="url(#g-sq-${GID})"/>
     ${[...Array(18)].map((_,i) => `<circle cx="${165 + (i%9)*11}" cy="${64 + Math.floor(i/9)*14 + (i%2)*3}" r="2.2" fill="#A35E4A" opacity=".55"/>`).join('')}
     <path d="M152 62C138 60 128 64 124 72C128 80 138 84 152 82Z" fill="#D9A592"/>
     <circle cx="138" cy="70" r="6" fill="#F4F1E6"/><circle cx="139" cy="70" r="3.4" fill="#11181C"/>
@@ -823,6 +833,7 @@ function spotRow(e, i){
 function renderDay(){
   const d = regionDays(region)[sel];
   renderDial(d);
+  renderTips(d);
   $('windows').innerHTML = d.windows.map(w => `<span class="win">${fmt(w.from)}–${fmt(w.to)}<small>${w.peak > .8 ? 'пик' : w.peak > .6 ? 'хорошо' : 'можно'}</small></span>`).join('')
     + (d.why.length ? `<p class="small muted" style="flex-basis:100%;margin:6px 0 0">${esc(d.why.join(', '))}.</p>` : '');
   $('topTitle').textContent = 'Куда поехать: ' + d.R.name;
@@ -952,15 +963,296 @@ function renderDetail(){
     ${e.cons.map(c => `<p class="warnline">${esc(c)}</p>`).join('')}
     ${e.pros.length ? `<p class="small" style="margin:6px 0">${esc(e.pros.join('; '))}</p>` : ''}
     <p style="margin:8px 0"><b>Лучшее время:</b> ${fmt(e.from)}–${fmt(e.to)}</p>
-    <div class="tags">${s.fish.map(f => `<button class="tag" data-f="${f}">${esc(FISH[f].name)}</button>`).join('')}</div>
     <p style="margin:8px 0">${esc(s.tackle)}</p>
+    ${spotHowHTML(s)}
     <p class="small muted" style="margin:8px 0 12px">${esc(s.note)}</p>
     <a class="btn" href="${gm}" target="_blank" rel="noopener">Открыть в Google Maps</a>
   </div>`;
-  $('spotDetail').querySelectorAll('.tag').forEach(t => t.onclick = () => { fishSel = t.dataset.f; fishMode = FISH[fishSel].fresh ? 'fresh' : 'sea'; go('fish'); });
+  wireChips($('spotDetail'));
 }
 
-/* ---- fish photos (Wikipedia) ---- */
+/* ================= GUIDE DATA ================= */
+const FISH_HOW = {
+  lates:{rigs:['jig','spin','float'], baits:['shrimp','livebait'], lures:['minnow','softjig']},
+  grouper:{rigs:['jig','bottom'], baits:['shrimp','squid','livebait'], lures:['softjig']},
+  snapper:{rigs:['bottom','jig'], baits:['squid','shrimp'], lures:['softjig']},
+  karanks:{rigs:['spin'], baits:['livebait'], lures:['popper','metal']},
+  barracuda:{rigs:['spin'], baits:['livebait'], lures:['minnow','metal']},
+  mullet:{rigs:['float','sabiki'], baits:['bread','shrimp'], lures:['sabiki']},
+  siganus:{rigs:['float'], baits:['bread','clam','shrimp'], lures:[]},
+  terapon:{rigs:['bottom','jig'], baits:['shrimp','worm','squid'], lures:['softjig','metal']},
+  scad:{rigs:['sabiki'], baits:['shrimp'], lures:['sabiki','metal']},
+  needlefish:{rigs:['spin'], baits:[], lures:['popper','metal']},
+  sillago:{rigs:['bottom'], baits:['worm','shrimp'], lures:[]},
+  squid:{rigs:['egi'], baits:[], lures:['egi']},
+  carp:{rigs:['bottom','float'], baits:['corn','bread','earthworm'], lures:[]},
+  tilapia:{rigs:['float'], baits:['earthworm','bread','corn'], lures:[]},
+  snakehead:{rigs:['spin'], baits:['livebait'], lures:['frog','minnow']},
+  catfish:{rigs:['bottom'], baits:['earthworm'], lures:[]}
+};
+
+const BAIT_DB = {
+  shrimp:{name:'Креветка', vn:'tôm, живая — tôm sống', photo:['Whiteleg shrimp','Penaeus monodon'],
+    buy:'Рыбный рынок рано утром (в Нячанге — Чо Дам или порт Винь Чыонг) или продавцы наживки у рыболовных магазинов. Живых берите 20–30 штук.',
+    hook:'Живую — проткните крючком 2–3-й сегмент от хвоста, не задевая тёмную полоску внутри: креветка останется живой и будет шевелиться. Мёртвую — очистите и наденьте от хвоста «чулком», жало выведите у головы. На мелкую рыбу — кусочек 1–2 см.',
+    keep:'Живую — в ведре с морской водой и аэратором, в тени. Мёртвую — в пакете на льду.',
+    tip:'Самая универсальная наживка. Не знаешь, что брать, — бери креветку.'},
+  squid:{name:'Кальмар нарезкой', vn:'mực', photo:['Squid as food'],
+    buy:'Рыбный рынок или замороженный в супермаркете. Одного среднего кальмара хватит на всю рыбалку.',
+    hook:'Нарежьте полосками примерно 1×5 см. Проткните один раз у широкого края, чтобы хвостик свободно играл в воде. Конец можно разрезать на два «хвоста».',
+    keep:'В пакете на льду. Держится на крючке крепко — мелочь его не обгрызает.',
+    tip:'Лучшая наживка для донки ночью: люциан и групер берут уверенно.'},
+  worm:{name:'Морской червь', vn:'trùn biển, sá sùng', photo:['Sipunculus nudus','Polychaete'],
+    buy:'Продают живым в магазинах снастей у моря и на рынках. Стоит дороже креветки.',
+    hook:'Наденьте кусок 3–5 см на крючок «чулком», начиная с головы, оставьте свободный хвостик 1–2 см.',
+    keep:'В коробке с влажным песком или водорослями, в прохладе.',
+    tip:'Лучшее для ловли с пляжа на донку: силлаго и тераподон.'},
+  earthworm:{name:'Земляной червь', vn:'giun đất, trùn đất', photo:['Earthworm'],
+    buy:'Магазины снастей в Далате. Можно накопать во влажной земле под камнями.',
+    hook:'Проткните червя 2–3 раза, оставив свободные концы, — он будет извиваться и привлекать рыбу. На мелкую рыбу — половинку.',
+    keep:'В коробке с влажной землёй, в тени.',
+    tip:'Классика для озёр: клюют почти все.'},
+  clam:{name:'Мясо моллюсков', vn:'ngao, nghêu, sò', photo:['Meretrix lyrata','Meretrix'],
+    buy:'Рынок — продают живыми на вес, недорого.',
+    hook:'Раскройте ракушку ножом, достаньте мясо и проткните 2–3 раза через плотную часть («ножку»).',
+    keep:'Живые ракушки — во влажной ткани. Мясо — на льду.',
+    tip:'Запасной вариант, если нет креветки.'},
+  bread:{name:'Хлеб и тесто', vn:'bánh mì, mồi bột', photo:[],
+    buy:'Обычный багет bánh mì в любой лавке. Тесто: мука, немного воды и щепоть сахара.',
+    hook:'Скатайте мякиш или тесто в шарик размером с горошину вокруг крючка и плотно обожмите — жало слегка прикрыто.',
+    keep:'В пакете, чтобы не засох.',
+    tip:'Крошите хлеб в воду рядом с поплавком — это прикормка, она подтянет стаю кефали.'},
+  corn:{name:'Кукуруза', vn:'bắp', photo:['Sweet corn'],
+    buy:'Консервированная в супермаркете или варёные початки у уличных продавцов.',
+    hook:'Наденьте 2–3 зерна на крючок №6–10, прокалывая каждое по центру. Жало спрячьте в последнем зерне.',
+    keep:'В банке с соком.',
+    tip:'Бросьте горсть зёрен в точку ловли — карп подойдёт на прикормку.'},
+  livebait:{name:'Живец', vn:'cá mồi sống', photo:['Decapterus macarellus','Baitfish'],
+    buy:'Наловите сами на сабики утром у причала или купите у рыбаков в порту.',
+    hook:'Проткните обе губы снизу вверх или под спинным плавником, не задевая позвоночник: рыбка должна плавать.',
+    keep:'В ведре с аэратором, чаще меняйте воду.',
+    tip:'Самая сильная наживка на крупного хищника.'}
+};
+
+const LURE_DB = {
+  softjig:{name:'Силикон на джиг-голове', size:'3–4", голова 7–20 г', photo:['Soft plastic bait'],
+    how:'Проводка «ступенькой»: дождитесь, пока приманка упадёт на дно (леска ослабнет), сделайте 2–3 оборота катушки, снова пауза до дна. Поклёвка ощущается как «тук» в удилище, чаще на падении.',
+    when:'Весь день у камней и опор мостов', tip:'Самая универсальная приманка. Если брать одну — бери эту.'},
+  minnow:{name:'Воблер-минноу', size:'9–12 см', photo:['Plug (fishing)'],
+    how:'Заброс, затем ровная медленная проводка или 2–3 рывка удилищем и пауза 1–2 секунды. Лопатка спереди уводит воблер на глубину 0,5–1,5 м.',
+    when:'Утро, вечер и ночь у мостов и в устьях', tip:'Днём бери натуральный серебристый цвет, ночью и в мутной воде — яркий или тёмный.'},
+  popper:{name:'Поппер', size:'7–10 см', photo:['Popper (fishing)'],
+    how:'Работает на поверхности: короткий резкий рывок кончиком удилища вниз — поппер «чмокает» и брызгает, пауза 1–2 секунды, снова рывок.',
+    when:'Рассвет в штиль, когда рыба гоняет мелочь у поверхности', tip:'Видишь всплески и «котлы» на воде — бросай поппер туда.'},
+  metal:{name:'Кастмастер, пилькер', size:'10–40 г', photo:['Spoon lure'],
+    how:'Летит очень далеко. Забросьте, дайте упасть на нужную глубину, затем быстрая проводка или подбросы удилищем вверх с падением.',
+    when:'Утро, с камней и пляжа, когда рыба далеко', tip:'Выручает, когда не знаешь, где стоит рыба: облавливает много воды.'},
+  egi:{name:'Эги (на кальмара)', size:'2,5–3,0', photo:['Squid jig'],
+    how:'Забросьте и дайте утонуть почти до дна, затем 2–3 резких подброса удилищем и пауза 5–10 секунд — кальмар хватает на паузе. Подсечка не нужна, просто ровно подматывайте.',
+    when:'Ночь у освещённых причалов, тихая вода', tip:'Новичку — оранжевый или розовый, размер 2,5.'},
+  sabiki:{name:'Сабики (самодур)', size:'6–8 крючков №6–10', photo:['Sabiki'],
+    how:'Опустите под причал или забросьте недалеко и плавно поднимайте-опускайте удилище. Блестящие крючки рыба принимает за мальков — часто садится сразу несколько.',
+    when:'Утро, когда стаи подходят к причалу', tip:'Отличный способ наловить живца. Крючки путаются — сматывай оснастку на дощечку.'},
+  frog:{name:'Лягушка-незацепляйка', size:'5–6 см', photo:[],
+    how:'Бросайте прямо в траву и кувшинки, ведите по поверхности рывками с паузами. После атаки выждите секунду и сильно подсеките.',
+    when:'Утро, вечер, жара; заросшие берега озёр', tip:'Крючки прижаты к телу — приманка не цепляется за траву.'}
+};
+
+const RIG_DB = {
+  float:{name:'Поплавочная удочка', level:'проще всего',
+    parts:'Удилище 3–4 м, леска 0,2–0,3 мм, поплавок, 2–3 дробинки-грузила, крючок №6–12.',
+    steps:['Наденьте поплавок и выставьте глубину: крючок должен висеть чуть выше дна, обычно 1–3 м.','Зажмите дробинки так, чтобы над водой торчала только антенна поплавка.','Насадите наживку, забросьте рядом с камнями или опорой моста.','Поплавок утонул или пошёл в сторону — плавно, но уверенно подсекайте вверх.']},
+  bottom:{name:'Донка со скользящим грузом', level:'просто',
+    parts:'Удилище 2,7–4 м, леска 0,3 мм, груз 30–100 г, бусина, вертлюжок, поводок 30–60 см, крючок №4–1/0.',
+    steps:['Наденьте на основную леску груз, затем бусину и привяжите вертлюжок.','К вертлюжку привяжите поводок с крючком, насадите наживку.','Забросьте, подмотайте слабину, удилище держите в руке или поставьте на подставку.','Груз скользит, рыба не чувствует его веса. Поклёвка — подёргивания кончика. Подсекайте, когда кончик согнётся.']},
+  jig:{name:'Джиг: спиннинг и силикон', level:'нужна практика',
+    parts:'Спиннинг 2,4–2,7 м, тест 7–30 г, плетёнка PE 0,8–1, флюр-поводок 0,3–0,5 мм длиной 1 м, джиг-голова 7–20 г, силиконовая приманка.',
+    steps:['Привяжите флюр-поводок к плетёнке, а к нему — джиг-голову.','Наденьте силикон на крючок ровно, жало выведите на спинку.','Забросьте и считайте секунды до касания дна — леска ослабнет.','2–3 оборота катушки, пауза до дна, повторить. Почувствовали «тук» — резкая подсечка.']},
+  spin:{name:'Спиннинг с воблером или блесной', level:'просто',
+    parts:'Спиннинг 2,4–2,7 м, плетёнка PE 1, поводок (флюр 0,4–0,6 мм или стальной от барракуды), застёжка, приманка.',
+    steps:['Привяжите поводок, на конец — застёжку, в неё пристегните приманку.','Забрасывайте веером: прямо, левее, правее.','Ведите приманку так, как написано в её карточке.','Удар — сразу подсечка, держите удилище согнутым и не давайте слабины.']},
+  sabiki:{name:'Сабики с причала', level:'проще всего',
+    parts:'Любое удилище, леска 0,25–0,3 мм, готовая сабики-оснастка, груз 15–30 г на конце.',
+    steps:['Привяжите сабики к леске, груз — к нижнему колечку.','Опустите оснастку под причал на нужную глубину.','Плавно поднимайте и опускайте удилище на 30–50 см.','Почувствовали дрожь — подождите пару секунд, может сесть ещё рыбка, и поднимайте.']},
+  egi:{name:'Кальмар на эги', level:'просто',
+    parts:'Спиннинг 2,4–2,7 м, плетёнка PE 0,6–0,8, флюр-поводок 0,25–0,3 мм, застёжка, эги 2,5–3,0.',
+    steps:['Привяжите поводок и застёжку, пристегните эги.','Забросьте к границе света и тени у фонаря, дайте утонуть.','2–3 резких подброса — пауза 5–10 секунд.','Тяжесть на леске — ровно подматывайте без рывков: кальмар держится щупальцами, крючка во рту нет.']}
+};
+
+const SPOT_RIGS = {rocks:['jig','spin'], estuary:['float','jig'], lagoon:['jig','float'], pier:['egi','sabiki'], beach:['bottom','spin'], lake:['float','bottom']};
+
+const BEGINNER = [
+  {t:'С чего начать', body:`<p>Самый простой первый выезд: поплавочная удочка, живая или свежая креветка и мост или причал (в Нячанге — мост Хом Бонг или причал Кау Да). Там всегда есть рыба и местные, у которых можно подсмотреть.</p><p>Второй шаг — спиннинг с силиконом на джиг-голове. Это один комплект, которым ловится почти всё морское.</p>`},
+  {t:'Первый набор снастей', body:`<ul><li>Спиннинг 2,4–2,7 м, тест 5–30 г.</li><li>Катушка 2500–3000 с плетёнкой PE 0,8–1.</li><li>Флюорокарбон 0,3 и 0,5 мм на поводки.</li><li>Джиг-головы 7, 10 и 14 г, силикон 3" — 2–3 упаковки.</li><li>Поплавки, дробинки, грузы 30–60 г, крючки №8, №4, №1, вертлюжки и застёжки.</li><li>2 сабики-оснастки, 2 эги 2,5.</li></ul><p>Этого хватит почти на все места из приложения. Покажите этот список продавцу.</p>`},
+  {t:'Где купить снасти и наживку', body:`<p>В Google Maps ищите <b>«cửa hàng đồ câu»</b> или <b>«đồ câu cá»</b> — магазины есть в каждом городе. Наживку покупайте на рыбном рынке рано утром, до 7:00, пока она свежая.</p>`},
+  {t:'Как забросить спиннинг', body:`<ol><li>Отмотайте приманку на 30–40 см от кончика удилища.</li><li>Прижмите леску указательным пальцем к удилищу и откиньте дужку катушки.</li><li>Отведите удилище за плечо, затем плавный взмах вперёд.</li><li>Отпустите палец, когда удилище смотрит вверх-вперёд под 45°.</li><li>Когда приманка упала — закройте дужку рукой и подмотайте слабину.</li></ol><p>Перед забросом всегда оглянитесь — нет ли людей сзади.</p>`},
+  {t:'Подсечка и вываживание', body:`<p>Почувствовали поклёвку — резко, но коротко поднимите удилище вверх: крючок должен вонзиться в рот. Затем держите удилище согнутым и подматывайте ровно.</p><p>Фрикцион (колёсико на катушке) настройте заранее: леска должна сходить с треском, если сильно потянуть рукой. Крупная рыба потянет — дайте ей уйти, фрикцион не даст порвать леску.</p>`},
+  {t:'Как снять рыбу и не уколоться', body:`<p>Берите рыбу через полотенце или липгрипом за нижнюю челюсть. Крючок вынимайте плоскогубцами. У сигана, тераподона, крылатки и сомов ядовитые или острые шипы — не берите их голой рукой. Если уколись — горячая вода (насколько терпимо) снимает боль от яда, затем к врачу.</p>`},
+  {t:'Узел для начала: паломар', body:`<ol><li>Сложите конец лески вдвое и проденьте петлю в ушко крючка.</li><li>Завяжите петлёй простой узел, не затягивая.</li><li>Проденьте крючок через петлю.</li><li>Смочите слюной и затяните, обрежьте хвостик.</li></ol><p>Подходит и для лески, и для плетёнки. Тренируйтесь дома.</p>`},
+  {t:'Частые ошибки новичка', body:`<ul><li>Слишком толстая леска и большой крючок — рыба не берёт.</li><li>Наживка давно мертва и размокла — меняйте каждые 10–15 минут.</li><li>Ловля в полдень на жаре — лучше рассвет и закат.</li><li>Нет подсечки — рыба объедает наживку.</li><li>Игнорируют прилив: на многих местах клюёт именно на смене воды.</li></ul>`},
+  {t:'Фразы по-вьетнамски', body:`<table><tr><td><b>Ở đây câu cá được không?</b></td><td>Здесь можно ловить?</td></tr><tr><td><b>Mồi câu bán ở đâu?</b></td><td>Где продают наживку?</td></tr><tr><td><b>Cho tôi tôm sống</b></td><td>Дайте живых креветок</td></tr><tr><td><b>Bao nhiêu tiền?</b></td><td>Сколько стоит?</td></tr><tr><td><b>Cá gì đây?</b></td><td>Что это за рыба?</td></tr><tr><td><b>cần câu, dây câu, lưỡi câu</b></td><td>удочка, леска, крючок</td></tr><tr><td><b>chì, phao, mồi giả</b></td><td>грузило, поплавок, искусственная приманка</td></tr></table>`}
+];
+
+/* ================= ILLUSTRATIONS ================= */
+const STEEL = '#7D8790';
+function hookP(x, y, s = 1, rot = 0){
+  return `<g transform="translate(${x} ${y}) rotate(${rot}) scale(${s})"><circle cx="0" cy="0" r="3" fill="none" stroke="${STEEL}" stroke-width="1.6"/><path d="M0 3V34A8 8 0 0 0 16 34V25l-4 5" fill="none" stroke="${STEEL}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></g>`;
+}
+function trebleP(x, y, s = 1){
+  const one = `<path d="M0 6V22A6 6 0 0 0 12 22V15l-3 4" fill="none" stroke="${STEEL}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>`;
+  return `<g transform="translate(${x} ${y}) scale(${s})"><circle cx="0" cy="3" r="3" fill="none" stroke="${STEEL}" stroke-width="1.4"/>${one}<g transform="scale(-1 1)">${one}</g></g>`;
+}
+const svgWrap = (inner, vb = '0 0 300 150', label = '') => `<svg viewBox="${vb}" role="img" aria-label="${esc(label)}">${inner}</svg>`;
+
+const BAIT_ART = {
+  shrimp:() => {
+    let seg = ''; for(let i = 0; i < 6; i++){ const x = 105 + i*21; seg += `<path d="M${x} ${56 - i} Q${x + 7} 78 ${x} ${101 - i*.5}" stroke="#C26A45" stroke-width="1.6" fill="none" opacity=".55"/>`; }
+    let legs = ''; for(let i = 0; i < 7; i++){ const x = 120 + i*15; legs += `<path d="M${x} 99 l-3 12" stroke="#C26A45" stroke-width="1.6"/>`; }
+    return `<path d="M246 72 C262 66 280 46 296 30 M246 76 C266 76 286 66 298 56" stroke="#C26A45" stroke-width="1.4" fill="none"/>
+      ${legs}
+      <path d="M80 98 L44 80 L52 97 L40 116 Z" fill="#E59B74" stroke="#C26A45" stroke-width="1.2"/>
+      <path d="M78 98 C92 56 170 42 222 58 C242 64 252 78 248 92 C232 98 206 94 184 99 C152 105 112 107 78 98Z" fill="#EDA680" stroke="#C26A45" stroke-width="1.4"/>
+      ${seg}
+      <path d="M246 70 L276 60 L248 76Z" fill="#E59B74"/>
+      <circle cx="232" cy="70" r="3.2" fill="#1b1b1b"/>
+      ${hookP(92, 40, 1.35)}`;
+  },
+  squid:() => `<path d="M30 66 L60 72 L30 84 L44 75Z" fill="#F2DED0" stroke="#CFAE97"/>
+      <path d="M50 70 C120 62 200 58 252 60 C272 62 276 86 252 88 C200 92 120 86 50 82 Q44 76 50 70Z" fill="#F6E6DA" stroke="#CFAE97" stroke-width="1.4"/>
+      ${[...Array(14)].map((_,i) => `<circle cx="${80 + i*12}" cy="${70 + (i%3)*5}" r="1.6" fill="#C98E7A" opacity=".6"/>`).join('')}
+      ${hookP(236, 36, 1.4)}`,
+  worm:() => `<path d="M30 92 C70 50 110 124 150 82 S232 48 268 84" stroke="#B9776A" stroke-width="17" fill="none" stroke-linecap="round"/>
+      <path d="M30 92 C70 50 110 124 150 82 S232 48 268 84" stroke="#D9A193" stroke-width="7" fill="none" stroke-linecap="round" stroke-dasharray="2 5"/>
+      ${hookP(40, 34, 1.4, -10)}`,
+  earthworm:() => `<path d="M24 96 C64 60 96 120 140 86 S220 60 276 92" stroke="#A9534A" stroke-width="10" fill="none" stroke-linecap="round"/>
+      <path d="M24 96 C64 60 96 120 140 86 S220 60 276 92" stroke="#7E3A33" stroke-width="10" fill="none" stroke-dasharray="1.5 6" opacity=".6"/>
+      <path d="M118 96 l10 -6" stroke="#E7B3A8" stroke-width="10" stroke-linecap="round"/>
+      ${hookP(138, 38, 1.5)}`,
+  clam:() => `<g transform="translate(40 30)"><ellipse cx="60" cy="50" rx="58" ry="40" fill="#D8C5A0" stroke="#A68D63" stroke-width="1.5"/>
+      ${[...Array(5)].map((_,i) => `<ellipse cx="60" cy="50" rx="${50 - i*10}" ry="${34 - i*7}" fill="none" stroke="#A68D63" opacity=".45"/>`).join('')}
+      <path d="M30 56 C40 36 80 36 92 54 C84 70 40 72 30 56Z" fill="#F0C9A0" stroke="#C98F62"/></g>
+      <path d="M200 92 C206 76 236 76 242 92 C236 106 206 106 200 92Z" fill="#F0C9A0" stroke="#C98F62"/>
+      ${hookP(214, 40, 1.4)}`,
+  bread:() => `<rect x="34" y="44" width="110" height="74" rx="22" fill="#F3E2B8" stroke="#C99A55" stroke-width="5"/>
+      ${[...Array(12)].map((_,i) => `<circle cx="${56 + (i%4)*22}" cy="${62 + Math.floor(i/4)*18}" r="2" fill="#D9C08A"/>`).join('')}
+      ${hookP(196, 22, 1.8)}
+      <circle cx="213" cy="100" r="20" fill="#F1DFB0" stroke="#C9A867" stroke-width="1.4"/>
+      <circle cx="206" cy="94" r="2" fill="#D9C08A"/><circle cx="220" cy="104" r="2" fill="#D9C08A"/>`,
+  corn:() => {
+    const k = (x, y, r = 0) => `<path transform="translate(${x} ${y}) rotate(${r})" d="M0 -10 C8 -10 10 0 6 10 L-6 10 C-10 0 -8 -10 0 -10Z" fill="#F4C842" stroke="#C99A1E" stroke-width="1.2"/>`;
+    return `${hookP(170, 24, 2)}${k(170, 64)}${k(170, 86)}${k(186, 108, 50)}
+      ${k(60, 70, 20)}${k(84, 92, -30)}${k(52, 104, 70)}${k(96, 62, 10)}`;
+  },
+  livebait:() => {
+    const inner = fishSVG('scad', FISH.scad.art).replace(/^<svg[^>]*>/, '').replace(/<\/svg>\s*$/, '');
+    return `<g transform="translate(36 22) scale(.78)">${inner}</g>` + hookP(62, 40, 1.3, -20);
+  }
+};
+
+const LURE_ART = {
+  softjig:() => `<defs><linearGradient id="sj${++GID}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6F9E78"/><stop offset="1" stop-color="#CDE3C9"/></linearGradient></defs>
+      <path d="M94 64 C140 56 200 62 224 70 C236 58 252 56 258 64 C260 82 248 94 232 82 L224 80 C200 90 140 92 94 86Z" fill="url(#sj${GID})" stroke="#4E7A55" stroke-width="1.2"/>
+      ${[...Array(10)].map((_,i) => `<circle cx="${110 + i*11}" cy="${70 + (i%2)*6}" r="1.3" fill="#FFE27A"/>`).join('')}
+      <path d="M100 75 L150 75 Q162 52 152 50" fill="none" stroke="${STEEL}" stroke-width="2.4" stroke-linecap="round"/>
+      <circle cx="82" cy="75" r="16" fill="#E2532F"/><circle cx="76" cy="71" r="4" fill="#fff"/><circle cx="75" cy="71" r="2" fill="#111"/>
+      <circle cx="68" cy="63" r="3" fill="none" stroke="${STEEL}" stroke-width="1.6"/>`,
+  minnow:() => `<defs><linearGradient id="mn${++GID}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2F5F8C"/><stop offset=".5" stop-color="#9DB8CC"/><stop offset="1" stop-color="#F2F5F7"/></linearGradient></defs>
+      <path d="M62 75 L32 92 L38 98 L66 82Z" fill="#CFE3EE" stroke="#9DB8CC"/>
+      <path d="M62 75 C84 52 200 52 244 68 L252 75 L244 82 C200 98 84 98 62 75Z" fill="url(#mn${GID})" stroke="#2F5F8C" stroke-width="1.2"/>
+      <circle cx="80" cy="70" r="5.5" fill="#F2C14E"/><circle cx="81" cy="70" r="2.6" fill="#111"/>
+      <path d="M96 82 Q160 88 230 78" stroke="#fff" stroke-width="1.4" opacity=".7" fill="none"/>
+      ${trebleP(130, 92, 1.3)}${trebleP(258, 75, 1.3)}`,
+  popper:() => `<path d="M76 58 L200 58 C232 60 246 70 246 75 C246 80 232 90 200 92 L76 92Z" fill="#F5F1E8" stroke="#B9B2A3" stroke-width="1.2"/>
+      <path d="M76 58 L150 58 L150 92 L76 92Z" fill="#E2532F" opacity=".9"/>
+      <ellipse cx="76" cy="75" rx="9" ry="17" fill="#7A1F10"/>
+      <circle cx="96" cy="68" r="5.5" fill="#FFE27A"/><circle cx="97" cy="68" r="2.6" fill="#111"/>
+      ${[...Array(7)].map((_,i) => `<path d="M250 75 l${28} ${-18 + i*6}" stroke="${['#fff','#E2532F'][i%2]}" stroke-width="2.4" stroke-linecap="round"/>`).join('')}
+      ${trebleP(150, 96, 1.3)}${trebleP(246, 82, 1.1)}`,
+  metal:() => `<defs><linearGradient id="mt${++GID}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#AAB4BC"/><stop offset=".45" stop-color="#F7F9FA"/><stop offset="1" stop-color="#8C969E"/></linearGradient></defs>
+      <circle cx="44" cy="75" r="6" fill="none" stroke="${STEEL}" stroke-width="2"/>
+      <path d="M52 75 C76 60 200 58 252 72 C200 90 76 90 52 75Z" fill="url(#mt${GID})" stroke="#7D8790" stroke-width="1.2"/>
+      <path d="M90 72 C140 66 190 66 230 72" stroke="#3E7CA6" stroke-width="5" opacity=".7" fill="none" stroke-linecap="round"/>
+      ${trebleP(262, 72, 1.4)}`,
+  egi:() => `<path d="M64 80 L114 96 L82 86Z" fill="#7D8790"/>
+      <path d="M60 72 C82 56 190 52 230 66 L236 75 L230 84 C190 98 82 96 60 80Z" fill="#F08A4B" stroke="#B65A24" stroke-width="1.2"/>
+      ${[...Array(8)].map((_,i) => `<path d="M${90 + i*17} 60 L${98 + i*17} 90" stroke="#FFD7A8" stroke-width="3" opacity=".7"/>`).join('')}
+      <path d="M140 64 L160 44 L172 62Z M140 86 L160 106 L172 88Z" fill="#E2532F" opacity=".85"/>
+      <circle cx="76" cy="70" r="6" fill="#F2C14E"/><circle cx="77" cy="70" r="3" fill="#111"/>
+      ${[...Array(9)].map((_,i) => { const a = (-60 + i*15)*Math.PI/180; return `<path d="M238 75 l${Math.cos(a)*20} ${Math.sin(a)*20}" stroke="${STEEL}" stroke-width="1.6"/>`; }).join('')}`,
+  sabiki:() => {
+    let s = `<path d="M18 40 H246" stroke="var(--ink)" stroke-width="1.4"/><circle cx="14" cy="40" r="4" fill="none" stroke="${STEEL}" stroke-width="1.6"/>
+      <path d="M252 34 C266 34 270 46 262 54 C256 60 246 54 246 46 C246 40 248 36 252 34Z" fill="#4A5560"/>`;
+    for(let i = 0; i < 6; i++){
+      const x = 40 + i*36;
+      s += `<path d="M${x} 40 V66" stroke="var(--ink)" stroke-width="1"/><path d="M${x} 66 l-6 22 M${x} 66 l0 24 M${x} 66 l6 22" stroke="${['#FF8FB1','#FFFFFF','#9FD3FF'][i%3]}" stroke-width="2.2" stroke-linecap="round"/>
+        <circle cx="${x}" cy="66" r="3" fill="#F2C14E"/>${hookP(x, 70, .8)}`;
+    }
+    return s;
+  },
+  frog:() => `<path d="M206 66 l42 -18 M206 76 l44 4 M206 86 l40 22 M206 70 l46 -6 M206 82 l46 14" stroke="#4E6B2F" stroke-width="2.4" stroke-linecap="round"/>
+      <ellipse cx="150" cy="76" rx="62" ry="34" fill="#6E9B4A" stroke="#3E5A25" stroke-width="1.4"/>
+      <ellipse cx="146" cy="84" rx="44" ry="18" fill="#C9DB98" opacity=".8"/>
+      <circle cx="100" cy="58" r="12" fill="#6E9B4A" stroke="#3E5A25"/><circle cx="100" cy="94" r="12" fill="#6E9B4A" stroke="#3E5A25"/>
+      <circle cx="98" cy="58" r="5" fill="#F2C14E"/><circle cx="98" cy="94" r="5" fill="#F2C14E"/><circle cx="97" cy="58" r="2.4" fill="#111"/><circle cx="97" cy="94" r="2.4" fill="#111"/>
+      <path d="M190 52 Q206 40 200 30 M190 100 Q206 112 200 122" stroke="${STEEL}" stroke-width="2.4" fill="none" stroke-linecap="round"/>`
+};
+
+function rigFrame(inner){
+  return `<rect x="0" y="62" width="300" height="178" fill="var(--sea-soft)"/>
+    <path d="M0 62 Q25 56 50 62 T100 62 T150 62 T200 62 T250 62 T300 62" stroke="var(--sea)" stroke-width="1.5" fill="none"/>${inner}`;
+}
+const lbl = (x, y, tx, ty, text) => `<path d="M${x} ${y} L${tx - 4} ${ty}" stroke="var(--muted)" stroke-width=".8"/><circle cx="${x}" cy="${y}" r="1.8" fill="var(--muted)"/><text class="rl" x="${tx}" y="${ty}" dominant-baseline="central">${text}</text>`;
+const seabed = `<path d="M0 218 Q40 210 80 218 T160 216 T240 220 T300 214 V240 H0Z" fill="var(--land)" stroke="var(--land-line)"/>`;
+const RIG_ART = {
+  float:() => rigFrame(`<path d="M110 0 V178" stroke="var(--ink)" stroke-width="1.2"/>
+      <path d="M110 34 V48" stroke="#E2532F" stroke-width="5" stroke-linecap="round"/>
+      <ellipse cx="110" cy="70" rx="8" ry="20" fill="#F5F1E8" stroke="#B9B2A3"/><path d="M110 48 V54" stroke="#E2532F" stroke-width="5"/>
+      <circle cx="110" cy="138" r="4" fill="#4A5560"/><circle cx="110" cy="150" r="3.5" fill="#4A5560"/>
+      ${hookP(110, 174, 1)}<path d="M112 210 C118 202 132 202 134 210 C130 218 116 218 112 210Z" fill="#EDA680"/>
+      ${seabed}
+      <path d="M60 64 V200" stroke="var(--muted)" stroke-dasharray="3 3"/><path d="M56 64 H64 M56 200 H64" stroke="var(--muted)"/><text class="rl" x="40" y="132" text-anchor="middle" transform="rotate(-90 40 132)">глубина 1–3 м</text>
+      ${lbl(110, 20, 150, 20, 'леска 0,2–0,3 мм')}${lbl(118, 64, 150, 70, 'поплавок')}${lbl(114, 144, 150, 144, 'дробинки-грузила')}${lbl(132, 206, 150, 192, 'крючок с наживкой')}`),
+  bottom:() => rigFrame(`<path d="M0 0 L148 204" stroke="var(--ink)" stroke-width="1.2"/>${seabed}
+      <ellipse cx="146" cy="204" rx="14" ry="9" fill="#4A5560"/><circle cx="166" cy="206" r="4" fill="#E2532F"/>
+      <path d="M172 206 h10" stroke="${STEEL}" stroke-width="3"/><path d="M182 206 H250" stroke="var(--ink)" stroke-width="1"/>
+      ${hookP(250, 192, .9, -90)}<path d="M252 202 C256 196 270 196 272 204 C268 212 256 210 252 202Z" fill="#EDA680"/>
+      ${lbl(60, 82, 110, 40, 'основная леска 0,3 мм')}${lbl(146, 196, 120, 120, 'скользящий груз 30–80 г')}${lbl(166, 202, 168, 150, 'бусина, вертлюжок')}${lbl(220, 206, 196, 178, 'поводок 30–60 см')}`),
+  jig:() => rigFrame(`<path d="M0 0 L176 196" stroke="var(--ink)" stroke-width="1.2"/>${seabed}
+      <path d="M260 214 Q248 168 236 212 Q222 168 208 210 Q194 166 180 206" stroke="#E2532F" stroke-width="1.6" stroke-dasharray="4 4" fill="none"/>
+      <path d="M186 198 l-10 2 l6 -9" stroke="#E2532F" stroke-width="1.6" fill="none"/>
+      <circle cx="176" cy="198" r="7" fill="#E2532F"/><path d="M182 196 C200 192 214 196 222 200 C228 194 236 196 236 202 C232 210 226 208 222 204 C210 208 196 206 182 202Z" fill="#6F9E78"/>
+      ${lbl(40, 46, 80, 30, 'плетёнка PE 0,8–1')}${lbl(150, 168, 150, 110, 'флюр-поводок 0,3–0,5')}${lbl(200, 200, 168, 146, 'джиг-голова, силикон')}
+      <text class="rl" x="294" y="232" text-anchor="end" style="font-size:10.5px">«ступенька»: 2–3 оборота, пауза до дна</text>`),
+  spin:() => rigFrame(`<path d="M0 0 L132 108" stroke="var(--ink)" stroke-width="1.2"/>
+      <path d="M132 108 L170 120" stroke="#9DB8CC" stroke-width="1.6"/><circle cx="172" cy="121" r="3" fill="none" stroke="${STEEL}" stroke-width="1.6"/>
+      <g transform="translate(150 96) scale(.5)">${LURE_ART.minnow()}</g>
+      <path d="M150 156 H80" stroke="#E2532F" stroke-width="2" stroke-dasharray="5 4"/><path d="M88 150 l-8 6 l8 6" stroke="#E2532F" stroke-width="2" fill="none"/>
+      ${lbl(50, 40, 90, 24, 'плетёнка PE 1')}${lbl(150, 113, 176, 84, 'поводок, застёжка')}${lbl(236, 128, 186, 186, 'воблер или блесна')}
+      <text class="rl" x="60" y="176" style="font-size:11px">проводка к себе</text>${seabed}`),
+  sabiki:() => rigFrame(`<path d="M0 0 L100 20 V40" stroke="var(--ink)" stroke-width="1.2" fill="none"/>
+      <rect x="20" y="20" width="96" height="12" fill="#B07A44" rx="2"/>
+      <g transform="translate(160 40) rotate(90) scale(.62)">${LURE_ART.sabiki()}</g>
+      <path d="M100 40 V60" stroke="var(--ink)"/>
+      <path d="M210 90 V60 M204 68 l6 -8 l6 8 M210 120 V150 M204 142 l6 8 l6 -8" stroke="#E2532F" stroke-width="2" fill="none"/>
+      <text class="rl" x="222" y="106">плавно</text><text class="rl" x="222" y="120">вверх-вниз</text>
+      ${lbl(136, 120, 70, 120, 'сабики')}${lbl(138, 196, 70, 186, 'груз 15–30 г')}
+      <text class="rl" x="124" y="30">причал</text>${seabed}`),
+  egi:() => rigFrame(`<path d="M0 0 L120 132" stroke="var(--ink)" stroke-width="1.2"/>${seabed}
+      <path d="M200 196 L180 120 L170 176 L150 110 L140 160" stroke="#E2532F" stroke-width="1.6" stroke-dasharray="4 4" fill="none"/>
+      <g transform="translate(96 108) scale(.45)">${LURE_ART.egi()}</g>
+      ${lbl(50, 56, 90, 36, 'PE 0,6–0,8 + поводок')}${lbl(140, 140, 100, 196, 'эги 2,5–3,0')}
+      <text class="rl" x="214" y="120">подброс</text><text class="rl" x="214" y="180">пауза 5–10 с</text>`)
+};
+
+function guideArt(kind, id, big){
+  if(kind === 'fish') return fishSVG(id, FISH[id].art, big);
+  if(kind === 'bait') return svgWrap(BAIT_ART[id](), '0 0 300 150', BAIT_DB[id].name);
+  if(kind === 'lure') return svgWrap(LURE_ART[id](), '0 0 300 150', LURE_DB[id].name);
+  return svgWrap(RIG_ART[id](), '0 0 300 240', RIG_DB[id].name);
+}
+const DB = {fish:FISH, bait:BAIT_DB, lure:LURE_DB, rig:RIG_DB};
+
+/* ================= PHOTOS ================= */
 const PHOTOS = {};
 const PHOTO_ALT = {
   scad:['Decapterus maruadsi','Decapterus macarellus','Decapterus russelli'],
@@ -971,7 +1263,6 @@ const BAD_IMG = /(map|distribution|range|drawing|illustration|plate|diagram|skel
 const okImg = name => /\.jpe?g$/i.test(name) && !BAD_IMG.test(name);
 const up = (url, w) => url.replace(/\/\d+px-/, '/' + w + 'px-');
 async function getJSON(url){ const r = await fetch(url); if(!r.ok) throw new Error(r.status); return r.json(); }
-// 1) main photo of the article (this is what worked before)
 async function fromSummary(title, lang){
   const t = encodeURIComponent(title.replace(/ /g, '_'));
   const j = await getJSON(`https://${lang}.wikipedia.org/api/rest_v1/page/summary/${t}`);
@@ -980,7 +1271,6 @@ async function fromSummary(title, lang){
   if(/(drawing|illustration|plate|map|distribution|\.svg)/i.test(name)) throw 0;
   return {src:j.thumbnail.source, big:j.thumbnail.source.replace(/\/\d+px-/, '/640px-'), page:j.content_urls.desktop.page};
 }
-// 2) any real photo of the species on Wikimedia Commons
 async function fromCommons(title){
   const q = encodeURIComponent(`"${title}" filetype:bitmap`);
   const j = await getJSON(`https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=${q}&gsrnamespace=6&gsrlimit=15&prop=imageinfo&iiprop=url&iiurlwidth=800&format=json&origin=*`);
@@ -990,30 +1280,30 @@ async function fromCommons(title){
   const u = p.imageinfo[0].thumburl;
   return {src:up(u, 400), big:u, page:p.imageinfo[0].descriptionurl};
 }
-function loadPhoto(id){
-  if(PHOTOS[id]) return PHOTOS[id];
-  const titles = PHOTO_ALT[id] || [FISH[id].lat];
-  return PHOTOS[id] = (async () => {
+function loadPhoto(kind, id){
+  const key = kind + ':' + id;
+  if(PHOTOS[key]) return PHOTOS[key];
+  const titles = kind === 'fish' ? (PHOTO_ALT[id] || [FISH[id].lat]) : (DB[kind][id].photo || []);
+  return PHOTOS[key] = (async () => {
     for(const t of titles){ try{ return await fromSummary(t, 'en'); }catch(e){} try{ return await fromSummary(t, 'ru'); }catch(e){} }
-    for(const t of titles){ try{ return await fromCommons(t); }catch(e){} }
+    if(kind === 'fish') for(const t of titles){ try{ return await fromCommons(t); }catch(e){} }
     return null;
   })();
 }
-function fishPic(id, big){
-  const f = FISH[id];
-  return `<div class="fimg${big ? ' big' : ''}" data-photo="${id}">${fishSVG(id, f.art, big)}</div>`;
+function pic(kind, id, big){
+  const photo = kind !== 'rig';
+  return `<div class="fimg${big ? ' big' : ''}${kind === 'rig' ? ' rig' : ''}" ${photo ? `data-photo="${kind}:${id}"` : ''}>${guideArt(kind, id, big)}</div>`;
 }
 function hydratePhotos(root){
   root.querySelectorAll('[data-photo]').forEach(el => {
-    const id = el.dataset.photo, big = el.classList.contains('big');
-    loadPhoto(id).then(p => {
-      if(!p) return;
+    if(el.dataset.done) return; el.dataset.done = 1;
+    const [kind, id] = el.dataset.photo.split(':'), big = el.classList.contains('big');
+    loadPhoto(kind, id).then(p => {
+      if(!p || !el.isConnected) return;
       const img = new Image();
-      img.alt = FISH[id].name; img.decoding = 'async';
+      img.alt = DB[kind][id].name; img.decoding = 'async';
       img.onload = () => {
-        el.innerHTML = '';
-        el.appendChild(img);
-        el.classList.add('photo');
+        el.innerHTML = ''; el.appendChild(img); el.classList.add('photo');
         if(big){ const c = document.createElement('a'); c.href = p.page; c.target = '_blank'; c.rel = 'noopener'; c.className = 'credit'; c.textContent = 'Фото: Wikimedia'; el.appendChild(c); }
       };
       img.src = big ? p.big : p.src;
@@ -1021,28 +1311,128 @@ function hydratePhotos(root){
   });
 }
 
-/* ---- fish ---- */
-function renderFish(){
-  $('fishFilter').innerHTML = [['sea','Море'],['fresh','Озёра Далата']].map(([k,l]) => `<button class="reg" aria-pressed="${fishMode === k}" data-m="${k}">${l}</button>`).join('');
-  $('fishFilter').querySelectorAll('.reg').forEach(b => b.onclick = () => { fishMode = b.dataset.m; fishSel = null; renderFish(); });
-  const ids = Object.keys(FISH).filter(k => !!FISH[k].fresh === (fishMode === 'fresh'));
-  $('fishGrid').innerHTML = ids.map(k => `<button class="fcard" data-f="${k}">${fishPic(k)}<b>${esc(FISH[k].name)}</b><span>${esc(FISH[k].vn)}</span></button>`).join('');
-  $('fishGrid').querySelectorAll('.fcard').forEach(c => c.onclick = () => { fishSel = c.dataset.f; renderFish(); $('fishDetail').scrollIntoView({behavior:'smooth', block:'start'}); });
-  if(fishSel){
-    const f = FISH[fishSel];
-    const where = SPOTS.filter(s => s.fish.includes(fishSel)).map(s => s.name + ' (' + regionOf(s.r).name + ')');
-    const photo = 'https://www.google.com/search?tbm=isch&q=' + encodeURIComponent(f.lat + ' ' + f.vn);
-    $('fishDetail').innerHTML = `<div class="fdetail">${fishPic(fishSel, true)}
-      <h3 style="font-size:19px">${esc(f.name)}</h3><div class="lat">${esc(f.lat)}, ${esc(f.vn)}</div>
-      <dl><dt>Где</dt><dd>${esc(f.where)}</dd><dt>Когда</dt><dd>${esc(f.when)}</dd><dt>Наживка</dt><dd>${esc(f.bait)}</dd><dt>Приманка</dt><dd>${esc(f.lure)}</dd><dt>Совет</dt><dd>${esc(f.tip)}</dd>
+/* ================= GUIDE UI ================= */
+let guideSec = 'fish', guideSel = null;
+const SECS = [['fish','Рыба'],['bait','Наживки'],['lure','Приманки'],['rig','Оснастки'],['new','Новичку']];
+function chip(kind, id){
+  const it = DB[kind][id];
+  return `<button class="mini" data-k="${kind}" data-id="${id}"><span class="th">${guideArt(kind, id)}</span><span>${esc(it.name)}</span></button>`;
+}
+function wireChips(root){
+  root.querySelectorAll('.mini').forEach(b => b.onclick = () => openGuide(b.dataset.k, b.dataset.id));
+}
+function openGuide(kind, id){
+  guideSec = kind; guideSel = id;
+  if(kind === 'fish') fishMode = FISH[id].fresh ? 'fresh' : 'sea';
+  go('fish');
+  setTimeout(() => { const el = $('guideDetail'); if(el) el.scrollIntoView({behavior:'smooth', block:'start'}); }, 30);
+}
+function usersOf(kind, id){
+  const key = kind === 'bait' ? 'baits' : kind === 'lure' ? 'lures' : 'rigs';
+  return Object.keys(FISH_HOW).filter(f => FISH_HOW[f][key].includes(id));
+}
+function howBlock(fid){
+  const h = FISH_HOW[fid]; if(!h) return '';
+  return `<h4>Как поймать</h4>
+    <div class="chiprow">${h.rigs.map(r => chip('rig', r)).join('')}</div>
+    ${h.baits.length ? `<h4>Наживка</h4><div class="chiprow">${h.baits.map(b => chip('bait', b)).join('')}</div>` : ''}
+    ${h.lures.length ? `<h4>Приманки</h4><div class="chiprow">${h.lures.map(l => chip('lure', l)).join('')}</div>` : ''}`;
+}
+function detailHTML(kind, id){
+  const it = DB[kind][id];
+  const close = `<button class="btn ghost" id="guideClose" style="margin-top:12px">Свернуть</button>`;
+  if(kind === 'fish'){
+    const where = SPOTS.filter(s => s.fish.includes(id)).map(s => s.name + ' (' + regionOf(s.r).name + ')');
+    const more = 'https://www.google.com/search?tbm=isch&q=' + encodeURIComponent(it.lat + ' ' + it.vn);
+    return `${pic('fish', id, true)}<h3 style="font-size:19px">${esc(it.name)}</h3><div class="lat">${esc(it.lat)}, ${esc(it.vn)}</div>
+      <dl><dt>Где</dt><dd>${esc(it.where)}</dd><dt>Когда</dt><dd>${esc(it.when)}</dd><dt>Совет</dt><dd>${esc(it.tip)}</dd>
       ${where.length ? `<dt>Места</dt><dd>${esc(where.join(', '))}</dd>` : ''}</dl>
-      <a class="btn ghost" href="${photo}" target="_blank" rel="noopener">Больше фото</a>
-      <button class="btn ghost" id="fishClose" style="margin-left:6px">Свернуть</button></div>`;
-    $('fishClose').onclick = () => { fishSel = null; renderFish(); };
-  } else $('fishDetail').innerHTML = '';
+      ${howBlock(id)}
+      <div style="margin-top:12px"><a class="btn ghost" href="${more}" target="_blank" rel="noopener">Больше фото</a> ${close}</div>`;
+  }
+  if(kind === 'bait'){
+    const fish = usersOf('bait', id);
+    return `${pic('bait', id, true)}<h3 style="font-size:19px">${esc(it.name)}</h3><div class="lat">${esc(it.vn)}</div>
+      <div class="howto"><div class="howart">${guideArt('bait', id)}</div><div><h4 style="margin-top:0">Как насадить</h4><p>${esc(it.hook)}</p></div></div>
+      <dl><dt>Где купить</dt><dd>${esc(it.buy)}</dd><dt>Как хранить</dt><dd>${esc(it.keep)}</dd><dt>Совет</dt><dd>${esc(it.tip)}</dd></dl>
+      ${fish.length ? `<h4>На кого</h4><div class="chiprow">${fish.map(f => chip('fish', f)).join('')}</div>` : ''}${close}`;
+  }
+  if(kind === 'lure'){
+    const fish = usersOf('lure', id);
+    return `${pic('lure', id, true)}<h3 style="font-size:19px">${esc(it.name)}</h3><div class="lat">размер: ${esc(it.size)}</div>
+      <div class="howto"><div class="howart">${guideArt('lure', id)}</div><div><h4 style="margin-top:0">Как вести</h4><p>${esc(it.how)}</p></div></div>
+      <dl><dt>Когда</dt><dd>${esc(it.when)}</dd><dt>Совет</dt><dd>${esc(it.tip)}</dd></dl>
+      ${fish.length ? `<h4>На кого</h4><div class="chiprow">${fish.map(f => chip('fish', f)).join('')}</div>` : ''}${close}`;
+  }
+  const fish = usersOf('rig', id);
+  return `${pic('rig', id, true)}<h3 style="font-size:19px">${esc(it.name)}</h3><div class="lat">сложность: ${esc(it.level)}</div>
+    <p><b>Что нужно:</b> ${esc(it.parts)}</p>
+    <ol class="steps">${it.steps.map(s => `<li>${esc(s)}</li>`).join('')}</ol>
+    ${fish.length ? `<h4>Кого ловят</h4><div class="chiprow">${fish.map(f => chip('fish', f)).join('')}</div>` : ''}${close}`;
+}
+function renderGuide(){
+  $('guideSecs').innerHTML = SECS.map(([k,l]) => `<button class="reg" aria-pressed="${guideSec === k}" data-s="${k}">${l}</button>`).join('');
+  $('guideSecs').querySelectorAll('.reg').forEach(b => b.onclick = () => { guideSec = b.dataset.s; guideSel = null; renderGuide(); });
+  const intro = {fish:'Нажмите на рыбу — увидите, как её поймать: оснастку, наживку и приманки.', bait:'Натуральные наживки: что купить, как насадить на крючок и как хранить.', lure:'Искусственные приманки: как выглядят и как их вести в воде.', rig:'Схемы снастей: из чего собрать и как ловить. Начните с поплавка или сабики.', new:'Всё, что нужно знать перед первой рыбалкой.'};
+  $('guideIntro').textContent = intro[guideSec];
+  $('fishFilter').style.display = guideSec === 'fish' ? '' : 'none';
+  if(guideSec === 'fish'){
+    $('fishFilter').innerHTML = [['sea','Море'],['fresh','Озёра Далата']].map(([k,l]) => `<button class="reg" aria-pressed="${fishMode === k}" data-m="${k}">${l}</button>`).join('');
+    $('fishFilter').querySelectorAll('.reg').forEach(b => b.onclick = () => { fishMode = b.dataset.m; guideSel = null; renderGuide(); });
+  }
+  if(guideSec === 'new'){
+    $('guideDetail').innerHTML = '';
+    $('guideGrid').className = '';
+    $('guideGrid').innerHTML = BEGINNER.map((b,i) => `<details class="acc"${i === 0 ? ' open' : ''}><summary>${esc(b.t)}</summary><div class="accbody">${b.body}</div></details>`).join('')
+      + `<p class="small muted" style="margin-top:14px">Список вещей — во вкладке «Сборы».</p>`;
+    return;
+  }
+  $('guideGrid').className = 'fishgrid';
+  const ids = Object.keys(DB[guideSec]).filter(k => guideSec !== 'fish' || !!FISH[k].fresh === (fishMode === 'fresh'));
+  const sub = (k) => guideSec === 'fish' ? FISH[k].vn : guideSec === 'bait' ? BAIT_DB[k].vn : guideSec === 'lure' ? LURE_DB[k].size : RIG_DB[k].level;
+  $('guideGrid').innerHTML = ids.map(k => `<button class="fcard" data-id="${k}">${pic(guideSec, k)}<b>${esc(DB[guideSec][k].name)}</b><span>${esc(sub(k))}</span></button>`).join('');
+  $('guideGrid').querySelectorAll('.fcard').forEach(c => c.onclick = () => { guideSel = c.dataset.id; renderGuide(); $('guideDetail').scrollIntoView({behavior:'smooth', block:'start'}); });
+  if(guideSel && DB[guideSec][guideSel]){
+    $('guideDetail').innerHTML = `<div class="fdetail">${detailHTML(guideSec, guideSel)}</div>`;
+    $('guideClose').onclick = () => { guideSel = null; renderGuide(); };
+    wireChips($('guideDetail'));
+  } else $('guideDetail').innerHTML = '';
   hydratePhotos($('tab-fish'));
-  $('baitTbl').innerHTML = '<tr><th>Наживка</th><th>На кого</th><th>Заметка</th></tr>' + BAITS.map(r => `<tr>${r.map(c => `<td>${esc(c)}</td>`).join('')}</tr>`).join('');
-  $('lureTbl').innerHTML = '<tr><th>Приманка</th><th>На кого</th><th>Как</th></tr>' + LURES.map(r => `<tr>${r.map(c => `<td>${esc(c)}</td>`).join('')}</tr>`).join('');
+}
+
+/* ================= TIPS ================= */
+function spotHowHTML(spot){
+  const rigs = SPOT_RIGS[spot.type] || ['float'];
+  const pool = k => [...new Set(spot.fish.flatMap(f => (FISH_HOW[f] || {})[k] || []))].slice(0, 4);
+  const baits = pool('baits'), lures = pool('lures');
+  return `<h4>Как ловить здесь</h4><div class="chiprow">${rigs.map(r => chip('rig', r)).join('')}</div>
+    ${baits.length ? `<h4>Наживка</h4><div class="chiprow">${baits.map(b => chip('bait', b)).join('')}</div>` : ''}
+    ${lures.length ? `<h4>Приманки</h4><div class="chiprow">${lures.map(l => chip('lure', l)).join('')}</div>` : ''}
+    <h4>Рыба</h4><div class="chiprow">${spot.fish.map(f => chip('fish', f)).join('')}</div>`;
+}
+function dayTips(d){
+  const w = d.wx, tips = [];
+  const first = [...d.windows].sort((a,b) => a.from - b.from)[0], top = [...d.windows].sort((a,b) => b.peak - a.peak)[0];
+  if(top){
+    const h = vnParts(top.from).h;
+    if(h < 8 && h >= 3) tips.push(`Главное окно рано утром — будь на месте к ${fmt(top.from - 20*60e3)}, чтобы успеть собрать снасть.`);
+    else if(h >= 19 || h < 3) tips.push(`Главное окно ночью, ${fmt(top.from)}–${fmt(top.to)}. Возьми налобный фонарь и выбирай мосты, причалы и устья — там безопаснее, чем на скалах.`);
+    else tips.push(`Главное окно ${fmt(top.from)}–${fmt(top.to)}. Днём рыба уходит глубже — лови у опор, камней и в тени.`);
+  }
+  if(!d.R.fresh && w.wind >= 6) tips.push(`Ветер ${Math.round(w.wind)} м/с с направления ${compass(w.dir)}: на открытых скалах будет волна. Выбирай устья, лагуны и закрытые бухты — они уже выше в рейтинге.`);
+  else if(!d.R.fresh && w.wind < 4) tips.push('Почти штиль — хороший день для мысов и камней: попробуй поппер на рассвете.');
+  if(w.rainProb > 70) tips.push('Высокий шанс дождя: возьми дождевик. После ливня в устьях вода мутнеет — латес становится смелее.');
+  const dist = Math.min(Math.abs(d.sol.phase), Math.abs(d.sol.phase - .5), Math.abs(d.sol.phase - 1));
+  if(dist < .08) tips.push(`${moonName(d.sol.phase)[0].toUpperCase() + moonName(d.sol.phase).slice(1)}: приливы выше обычного и сильнее течение. На смене воды клёв активнее, но следи, чтобы не отрезало водой на камнях.`);
+  if(d.sol.fraction < .3 && !d.R.fresh) tips.push('Тёмная ночь — хорошее время для кальмара у фонарей причала.');
+  tips.push(d.R.fresh ? 'Новичку на озере: поплавок, червь или кукуруза у травы — почти гарантированная поклёвка.' : 'Новичку: начни с поплавочной удочки и креветки у моста или причала — почти гарантированная поклёвка.');
+  return tips.slice(0, 4);
+}
+function renderTips(d){
+  const best = d.spots[0];
+  $('dayTips').innerHTML = `<ul class="tips">${dayTips(d).map(t => `<li>${esc(t)}</li>`).join('')}</ul>
+    <div class="detail" style="margin-top:12px"><div class="row"><h3>Что взять на «${esc(best.spot.name)}»</h3></div>${spotHowHTML(best.spot)}</div>`;
+  wireChips($('dayTips'));
 }
 
 /* ---- checklist ---- */
@@ -1072,7 +1462,7 @@ function go(tab){
     if(!map) initMap(); else { setTimeout(() => map.invalidateSize(), 60); renderMarkers(); }
     if(selSpot && map){ const s = SPOTS.find(x => x.id === selSpot); map.setView([s.lat, s.lng], tilesOn ? 15 : 11.5); }
   }
-  if(tab === 'fish') renderFish();
+  if(tab === 'fish') renderGuide();
   window.scrollTo({top:0});
 }
 document.querySelectorAll('nav.tabs button').forEach(b => b.onclick = () => go(b.dataset.tab));
