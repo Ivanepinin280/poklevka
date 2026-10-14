@@ -905,14 +905,14 @@ const BAD_IMG = /(map|distribution|range|drawing|illustration|plate|diagram|skel
 const okImg = name => /\.jpe?g$/i.test(name) && !BAD_IMG.test(name);
 const up = (url, w) => url.replace(/\/\d+px-/, '/' + w + 'px-');
 async function getJSON(url){ const r = await fetch(url); if(!r.ok) throw new Error(r.status); return r.json(); }
-// 1) photo from the species article (jpg only, no drawings or maps)
-async function fromArticle(title){
+// 1) main photo of the article (this is what worked before)
+async function fromSummary(title, lang){
   const t = encodeURIComponent(title.replace(/ /g, '_'));
-  const j = await getJSON(`https://en.wikipedia.org/api/rest_v1/page/media-list/${t}`);
-  const it = (j.items || []).find(i => i.type === 'image' && i.srcset && okImg(i.title || ''));
-  if(!it) throw 0;
-  const src = 'https:' + it.srcset[0].src;
-  return {src:up(src, 400), big:up(src, 800), page:`https://en.wikipedia.org/wiki/${t}`};
+  const j = await getJSON(`https://${lang}.wikipedia.org/api/rest_v1/page/summary/${t}`);
+  if(!j.thumbnail || !j.thumbnail.source) throw 0;
+  const name = decodeURIComponent(j.thumbnail.source.split('/').pop());
+  if(/(drawing|illustration|plate|map|distribution|\.svg)/i.test(name)) throw 0;
+  return {src:j.thumbnail.source, big:j.thumbnail.source.replace(/\/\d+px-/, '/640px-'), page:j.content_urls.desktop.page};
 }
 // 2) any real photo of the species on Wikimedia Commons
 async function fromCommons(title){
@@ -928,7 +928,7 @@ function loadPhoto(id){
   if(PHOTOS[id]) return PHOTOS[id];
   const titles = PHOTO_ALT[id] || [FISH[id].lat];
   return PHOTOS[id] = (async () => {
-    for(const t of titles){ try{ return await fromArticle(t); }catch(e){} }
+    for(const t of titles){ try{ return await fromSummary(t, 'en'); }catch(e){} try{ return await fromSummary(t, 'ru'); }catch(e){} }
     for(const t of titles){ try{ return await fromCommons(t); }catch(e){} }
     return null;
   })();
